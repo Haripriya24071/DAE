@@ -635,6 +635,19 @@
     white-space: nowrap;
   }
 
+  /* EXAMPLE OUTPUT BANNER */
+  .example-banner {
+    background: #F5F0E8;
+    border: 1px solid #D4CFC4;
+    border-left: 3px solid #996600;
+    color: #6B6760;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    padding: 8px 20px;
+    margin-bottom: 16px;
+  }
+
   /* PART 5 — PRINT STYLESHEET */
   @media print {
     body { background: white !important; color: black !important; }
@@ -645,14 +658,15 @@
     .narrative-body-container { display: flex !important; }
     .narrative-section { page-break-inside: avoid; }
     .res-item-card { page-break-inside: avoid; margin-bottom: 16px !important; box-shadow: none !important; border: 1px solid #0A0A0A !important; }
+  }
+
 /* ── QA PANEL ─────────────────────────────────────── */
 
 .qa-panel {
-  margin: 32px 0 0;
-  border-top: 2px solid #0A0A0A;
-  background: #FDFCFA;
+  margin: 32px 24px;
   border: 1px solid #D4CFC4;
   box-shadow: 3px 3px 0 #D4CFC4;
+  background: #FDFCFA;
 }
 
 .qa-header {
@@ -689,12 +703,10 @@
   border-bottom: 1px solid #E4E0D5;
 }
 
-/* Scrollbar */
 .qa-messages::-webkit-scrollbar { width: 4px; }
 .qa-messages::-webkit-scrollbar-track { background: #F5F0E8; }
 .qa-messages::-webkit-scrollbar-thumb { background: #C4BFB4; }
 
-/* Suggestion chips */
 .qa-suggestion-row {
   display: flex;
   gap: 6px;
@@ -710,7 +722,6 @@
   background: #FDFCFA;
   color: #6B6760;
   cursor: pointer;
-  letter-spacing: 0;
   text-align: left;
   transition: all 0.1s;
   border-radius: 0;
@@ -723,12 +734,10 @@
   background: #F5F0E8;
 }
 
-/* Message bubbles */
 .qa-message {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  max-width: 100%;
 }
 
 .qa-message.user { align-items: flex-end; }
@@ -773,7 +782,6 @@
   padding: 0 2px;
 }
 
-/* Input row */
 .qa-input-row {
   display: flex;
   gap: 0;
