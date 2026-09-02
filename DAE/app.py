@@ -121,6 +121,46 @@ No explanation. Just the single word."""
     except Exception:
         return "SIGNIFICANT"
 
+def calculate_confidence(score, verdict_text, chunk_a, chunk_b):
+    confidence = 0.0
+    
+    # Factor 1: similarity score (lower distance = more confident)
+    # score is cosine distance 0-1, lower = more similar topic
+    score_confidence = (1 - score) * 40  # max 40 points
+    confidence += score_confidence
+    
+    # Factor 2: verdict clarity (clear DISAGREE/AGREE = confident)
+    verdict_upper = verdict_text.upper()
+    if "DISAGREE" in verdict_upper and "PARTIALLY" not in verdict_upper:
+        confidence += 30
+    elif "AGREE" in verdict_upper and "PARTIALLY" not in verdict_upper:
+        confidence += 28
+    elif "PARTIALLY" in verdict_upper:
+        confidence += 15
+    
+    # Factor 3: text length (longer chunks = more context = more confident)
+    avg_len = (len(chunk_a) + len(chunk_b)) / 2
+    if avg_len > 300:
+        confidence += 20
+    elif avg_len > 150:
+        confidence += 12
+    else:
+        confidence += 5
+    
+    # Factor 4: REASON quality (longer reason = more specific = confident)
+    reason_lines = [l for l in verdict_text.split('\n') 
+                    if l.startswith('REASON:')]
+    if reason_lines:
+        reason_len = len(reason_lines[0])
+        if reason_len > 80:
+            confidence += 10
+        elif reason_len > 40:
+            confidence += 6
+        else:
+            confidence += 2
+    
+    return min(round(confidence, 1), 99.0)  # cap at 99
+
 def process_documents(file_a, file_b):
     try:
         from langchain_community.document_loaders import PyPDFLoader
@@ -199,7 +239,8 @@ REASON: [One sentence explanation]"""
                         "chunk_b": best_match.page_content,
                         "score": float(round(score, 3)),
                         "verdict": verdict,
-                        "reason": reason
+                        "reason": reason,
+                        "confidence": calculate_confidence(score, verdict_text, chunk.page_content, best_match.page_content)
                     }
                     if "DISAGREE" in verdict:
                         entry["severity"] = rate_severity(chunk.page_content, best_match.page_content, reason, llm)
@@ -586,7 +627,8 @@ REASON: [One sentence explanation]"""
                             "chunk_b": best_match.page_content,
                             "score": float(round(score, 3)),
                             "verdict": verdict,
-                            "reason": reason
+                            "reason": reason,
+                            "confidence": calculate_confidence(score, verdict_text, chunk.page_content, best_match.page_content)
                         }
 
                         if "DISAGREE" in verdict:
@@ -809,7 +851,8 @@ REASON: [One sentence explanation]"""
                                 "chunk_b": best_match.page_content,
                                 "score": float(round(score, 3)),
                                 "verdict": verdict,
-                                "reason": reason
+                                "reason": reason,
+                                "confidence": calculate_confidence(score, verdict_text, chunk.page_content, best_match.page_content)
                             }
 
                             if "DISAGREE" in verdict:

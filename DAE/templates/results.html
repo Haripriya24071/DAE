@@ -452,6 +452,36 @@
     border: 1px solid rgba(26, 107, 0, 0.3);
   }
 
+  /* CONFIDENCE INDICATOR */
+  .confidence-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-bottom: 1px solid #E4E0D5;
+    justify-content: flex-end;
+    background: #FAFAF8;
+  }
+
+  .confidence-bar-wrap {
+    width: 80px;
+    height: 3px;
+    background: #E4E0D5;
+  }
+
+  .confidence-bar-fill {
+    height: 100%;
+    background: #0A0A0A;
+    transition: width 0.8s ease;
+  }
+
+  .confidence-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: #AAAAAA;
+  }
+
   .verdict-reason-text {
     font-family: 'Space Grotesk', sans-serif;
     font-size: 13px;
@@ -1013,6 +1043,18 @@
                  data-score="{{ item.score if item.score is defined else 0.25 }}" 
                  data-card-index="c-{{ loop.index }}">
               
+              <div class="confidence-indicator">
+                <div class="confidence-bar-wrap">
+                  <div class="confidence-bar-fill"
+                       style="width: {{ item.confidence or 75 }}%"
+                       data-confidence="{{ item.confidence or 75 }}">
+                  </div>
+                </div>
+                <div class="confidence-label">
+                  {{ item.confidence or 75 }}% CONFIDENCE
+                </div>
+              </div>
+
               {% if item.pair_label or item.doc_i %}
                 <div style="font-family: 'Space Mono', monospace; font-size: 8px; color: #AAAAAA; letter-spacing: 2px; text-transform: uppercase; padding: 8px 16px 0 16px;">
                   {{ item.pair_label or (item.doc_i ~ ' VS ' ~ item.doc_j) }}
@@ -1139,6 +1181,18 @@
                  data-score="{{ item.score if item.score is defined else 0.78 }}" 
                  data-card-index="a-{{ loop.index }}">
               
+              <div class="confidence-indicator">
+                <div class="confidence-bar-wrap">
+                  <div class="confidence-bar-fill"
+                       style="width: {{ item.confidence or 75 }}%"
+                       data-confidence="{{ item.confidence or 75 }}">
+                  </div>
+                </div>
+                <div class="confidence-label">
+                  {{ item.confidence or 75 }}% CONFIDENCE
+                </div>
+              </div>
+
               {% if item.pair_label or item.doc_i %}
                 <div style="font-family: 'Space Mono', monospace; font-size: 8px; color: #AAAAAA; letter-spacing: 2px; text-transform: uppercase; padding: 8px 16px 0 16px;">
                   {{ item.pair_label or (item.doc_i ~ ' VS ' ~ item.doc_j) }}
@@ -1701,5 +1755,15 @@
     const el = document.getElementById(id);
     if (el) el.remove();
   }
+
+  // COLOR CONFIDENCE BARS ON LOAD
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.confidence-bar-fill').forEach(bar => {
+      const val = parseFloat(bar.dataset.confidence);
+      if (val >= 80) bar.style.background = '#1A6B00';
+      else if (val >= 60) bar.style.background = '#996600';
+      else bar.style.background = '#CC2200';
+    });
+  });
 </script>
 {% endblock %}
