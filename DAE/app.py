@@ -93,6 +93,34 @@ def test_analyze():
     results["all_steps"] = "PASSED"
     return jsonify(results)
 
+def rate_severity(chunk_a, chunk_b, reason, llm):
+    try:
+        severity_prompt = f"""Rate the severity of this contradiction between two documents.
+
+Document A says: {chunk_a[:200]}
+Document B says: {chunk_b[:200]}
+Conflict: {reason}
+
+Consider: legal/financial impact, operational impact, clarity impact.
+
+Respond with ONLY one word — either:
+CRITICAL
+SIGNIFICANT  
+MINOR
+
+No explanation. Just the single word."""
+        
+        response = llm.invoke(severity_prompt)
+        text = getattr(response, "content", str(response)).strip().upper()
+        if "CRITICAL" in text:
+            return "CRITICAL"
+        elif "SIGNIFICANT" in text:
+            return "SIGNIFICANT"
+        else:
+            return "MINOR"
+    except Exception:
+        return "SIGNIFICANT"
+
 def process_documents(file_a, file_b):
     try:
         from langchain_community.document_loaders import PyPDFLoader
@@ -174,6 +202,7 @@ REASON: [One sentence explanation]"""
                         "reason": reason
                     }
                     if "DISAGREE" in verdict:
+                        entry["severity"] = rate_severity(chunk.page_content, best_match.page_content, reason, llm)
                         contradictions.append(entry)
                     else:
                         agreements.append(entry)
@@ -199,6 +228,9 @@ REASON: [One sentence explanation]"""
                     blind_spots_b.append(chunk.page_content[:200])
             except:
                 continue
+
+        severity_order = {"CRITICAL": 0, "SIGNIFICANT": 1, "MINOR": 2}
+        contradictions.sort(key=lambda x: severity_order.get(x.get("severity", "MINOR"), 1))
 
         # FIX 3 - Convert cosine distance to similarity percentage
         result = {
@@ -558,11 +590,14 @@ REASON: [One sentence explanation]"""
                         }
 
                         if "DISAGREE" in verdict:
+                            severity = rate_severity(chunk.page_content, best_match.page_content, reason, llm)
+                            entry["severity"] = severity
                             contradictions.append(entry)
                             # Stream contradiction immediately
                             yield send("contradiction", {
                                 "index": len(contradictions),
-                                "data": entry
+                                "data": entry,
+                                "severity": severity
                             })
                         else:
                             agreements.append(entry)
@@ -608,6 +643,9 @@ REASON: [One sentence explanation]"""
             # Step 6 — Narrative
             yield send("progress", {"step": 7, "total": 7,
                 "message": "Generating narrative report...", "percent": 88})
+
+            severity_order = {"CRITICAL": 0, "SIGNIFICANT": 1, "MINOR": 2}
+            contradictions.sort(key=lambda x: severity_order.get(x.get("severity", "MINOR"), 1))
 
             results = {
                 "contradictions": contradictions[:10],
@@ -775,6 +813,9 @@ REASON: [One sentence explanation]"""
                             }
 
                             if "DISAGREE" in verdict:
+                                entry["severity"] = rate_severity(
+                                    chunk.page_content, best_match.page_content, reason, llm
+                                )
                                 all_contradictions.append(entry)
                             else:
                                 all_agreements.append(entry)
@@ -801,6 +842,9 @@ REASON: [One sentence explanation]"""
                     except:
                         continue
             blind_spots[name_i] = blind_spots[name_i][:5]
+
+        severity_order = {"CRITICAL": 0, "SIGNIFICANT": 1, "MINOR": 2}
+        all_contradictions.sort(key=lambda x: severity_order.get(x.get("severity", "MINOR"), 1))
 
         results = {
             "mode": "multi",

@@ -425,6 +425,33 @@
     border-color: rgba(153, 102, 0, 0.4);
   }
 
+  /* SEVERITY BADGES */
+  .severity-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    padding: 3px 8px;
+    border-radius: 0 !important;
+    font-weight: 700;
+    letter-spacing: 1px;
+    display: inline-block;
+    white-space: nowrap;
+  }
+  .severity-badge.critical {
+    background: rgba(204, 34, 0, 0.12);
+    color: #CC2200;
+    border: 1px solid rgba(204, 34, 0, 0.4);
+  }
+  .severity-badge.significant {
+    background: rgba(153, 102, 0, 0.12);
+    color: #996600;
+    border: 1px solid rgba(153, 102, 0, 0.4);
+  }
+  .severity-badge.minor {
+    background: rgba(26, 107, 0, 0.1);
+    color: #1A6B00;
+    border: 1px solid rgba(26, 107, 0, 0.3);
+  }
+
   .verdict-reason-text {
     font-family: 'Space Grotesk', sans-serif;
     font-size: 13px;
@@ -831,6 +858,17 @@
   {% set b_count = (result.blind_spots|length if (result and result.blind_spots is mapping) else ((result.blind_spots_a|length + result.blind_spots_b|length) if (result and result.blind_spots_a) else (2 if not result else 0))) %}
   {% set total_chunks = (result.total_chunks if (result and result.total_chunks is defined) else ((result.total_chunks_a + result.total_chunks_b) if (result and result.total_chunks_a) else (99 if not result else 0))) %}
 
+  {% set critical_count = (result.contradictions | selectattr('severity', 'eq', 'CRITICAL') | list | length) if (result and result.contradictions) else 1 %}
+  {% set significant_count = (result.contradictions | selectattr('severity', 'eq', 'SIGNIFICANT') | list | length) if (result and result.contradictions) else 1 %}
+  {% set minor_count = (result.contradictions | selectattr('severity', 'eq', 'MINOR') | list | length) if (result and result.contradictions) else 1 %}
+
+  {% set worst_color = '#1A6B00' %}
+  {% if critical_count > 0 %}
+    {% set worst_color = '#CC2200' %}
+  {% elif significant_count > 0 %}
+    {% set worst_color = '#996600' %}
+  {% endif %}
+
   <div class="stats-row-grid" style="grid-template-columns: repeat({% if result and result.mode == 'multi' %}5{% else %}4{% endif %}, 1fr);">
     {% if result and result.mode == 'multi' %}
       <div class="res-stat-card">
@@ -839,7 +877,7 @@
       </div>
     {% endif %}
     <div class="res-stat-card">
-      <span class="res-stat-val" style="color:#CC2200;">{{ c_count }}</span>
+      <span class="res-stat-val" style="color: {{ worst_color }};">{{ c_count }}</span>
       <span class="res-stat-lbl">CONTRADICTIONS</span>
     </div>
     <div class="res-stat-card">
@@ -907,6 +945,12 @@
 
       <!-- TAB CONTENT — CONTRADICTIONS -->
       <div class="tab-pane active" id="tab-contradictions">
+        <div style="font-family: 'Space Mono', monospace; font-size: 9px; color: #AAAAAA; letter-spacing: 2px; margin-bottom: 12px; display: flex; gap: 16px;">
+          <span><strong style="color: #CC2200;">● CRITICAL:</strong> {{ critical_count }}</span>
+          <span><strong style="color: #996600;">◆ SIGNIFICANT:</strong> {{ significant_count }}</span>
+          <span><strong style="color: #1A6B00;">▸ MINOR:</strong> {{ minor_count }}</span>
+        </div>
+
         {% if result and result.contradictions %}
           {% for item in result.contradictions %}
             <div class="res-item-card" 
@@ -947,6 +991,14 @@
 
               <div class="card-bottom-strip">
                 <span class="verdict-tag-badge disagree">{{ item.verdict or 'DISAGREE' }}</span>
+                {% set sev = item.severity or 'SIGNIFICANT' %}
+                {% if sev == 'CRITICAL' %}
+                  <span class="severity-badge critical">● CRITICAL</span>
+                {% elif sev == 'MINOR' %}
+                  <span class="severity-badge minor">▸ MINOR</span>
+                {% else %}
+                  <span class="severity-badge significant">◆ SIGNIFICANT</span>
+                {% endif %}
                 <span class="verdict-reason-text">{{ item.reason or 'Excerpts contain opposing numerical values or semantic statements.' }}</span>
               </div>
             </div>

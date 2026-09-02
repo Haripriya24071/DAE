@@ -1169,7 +1169,9 @@
       case 'contradiction':
         liveContradictions.push(data.data);
         updateLiveCounter('contradictions', liveContradictions.length);
-        flashCounter('contradictions', '#CC2200');
+        const color = data.severity === 'CRITICAL' ? '#CC2200'
+          : data.severity === 'SIGNIFICANT' ? '#996600' : '#1A6B00';
+        flashCounter('contradictions', color);
         break;
 
       case 'agreement':
