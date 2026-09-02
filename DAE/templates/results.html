@@ -618,7 +618,158 @@
     .narrative-body-container { display: flex !important; }
     .narrative-section { page-break-inside: avoid; }
     .res-item-card { page-break-inside: avoid; margin-bottom: 16px !important; box-shadow: none !important; border: 1px solid #0A0A0A !important; }
-    #trace-svg, #token-tooltip { display: none !important; }
+  /* Q&A PANEL */
+  .qa-panel {
+    border-top: 1px solid #D4CFC4;
+    background: #FDFCFA;
+    padding: 24px;
+    margin-top: 32px;
+  }
+
+  .qa-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .qa-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 5px;
+    color: #AAAAAA;
+  }
+
+  .qa-subtitle {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px;
+    color: #6B6760;
+  }
+
+  .qa-messages {
+    min-height: 60px;
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .qa-suggestion-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .qa-suggestion {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    padding: 6px 12px;
+    border: 1px solid #D4CFC4;
+    background: transparent;
+    color: #6B6760;
+    cursor: pointer;
+    letter-spacing: 0px;
+    text-align: left;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .qa-suggestion:hover {
+    border-color: #0A0A0A;
+    color: #0A0A0A;
+  }
+
+  .qa-message {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .qa-message.user {
+    align-items: flex-end;
+  }
+
+  .qa-message.assistant {
+    align-items: flex-start;
+  }
+
+  .qa-bubble {
+    max-width: 75%;
+    padding: 10px 14px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .qa-message.user .qa-bubble {
+    background: #0A0A0A;
+    color: #F5F0E8;
+    border: 1px solid #0A0A0A;
+    box-shadow: 2px 2px 0 #D4CFC4;
+  }
+
+  .qa-message.assistant .qa-bubble {
+    background: #FDFCFA;
+    color: #0A0A0A;
+    border: 1px solid #D4CFC4;
+    box-shadow: 2px 2px 0 #D4CFC4;
+    border-left: 3px solid #1A6B00;
+  }
+
+  .qa-message.assistant.loading .qa-bubble {
+    color: #AAAAAA;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+  }
+
+  .qa-meta {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    color: #AAAAAA;
+    letter-spacing: 1px;
+  }
+
+  .qa-input-row {
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid #E4E0D5;
+    padding-top: 16px;
+  }
+
+  .qa-input {
+    flex: 1;
+    height: 40px;
+    padding: 0 14px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    border: 1px solid #D4CFC4;
+    background: #F5F0E8;
+    color: #0A0A0A;
+    outline: none;
+  }
+
+  .qa-input:focus {
+    border-color: #0A0A0A;
+  }
+
+  .qa-send {
+    height: 40px;
+    padding: 0 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    background: #0A0A0A;
+    color: #F5F0E8;
+    border: none;
+    cursor: pointer;
+  }
+
+  .qa-send:hover { background: #1A6B00; }
+  .qa-send:disabled {
+    background: #E4E0D5;
+    color: #AAAAAA;
+    cursor: not-allowed;
   }
 </style>
 {% endblock %}
@@ -954,6 +1105,41 @@
               <div class="blind-item">Appendix B: Remote Work & Equipment Allowance Policy</div>
             {% endif %}
           </div>
+      <!-- Q&A PANEL -->
+      <div class="qa-panel" id="qa-panel">
+        <div class="qa-header">
+          <div class="qa-title">ASK DAE</div>
+          <div class="qa-subtitle">
+            Ask anything about these documents
+          </div>
+        </div>
+
+        <div class="qa-messages" id="qa-messages">
+          <div class="qa-suggestion-row">
+            <button class="qa-suggestion" onclick="askSuggestion(this)">
+              Which document is more comprehensive?
+            </button>
+            <button class="qa-suggestion" onclick="askSuggestion(this)">
+              What is the most critical contradiction?
+            </button>
+            <button class="qa-suggestion" onclick="askSuggestion(this)">
+              Summarise the key differences in one sentence
+            </button>
+            <button class="qa-suggestion" onclick="askSuggestion(this)">
+              Which document would you recommend?
+            </button>
+          </div>
+        </div>
+
+        <div class="qa-input-row">
+          <input type="text" 
+            id="qa-input"
+            class="qa-input"
+            placeholder="Ask a question about these documents..."
+            onkeydown="if(event.key==='Enter') submitQuestion()">
+          <button class="qa-send" onclick="submitQuestion()">
+            ASK →
+          </button>
         </div>
       </div>
 
@@ -1297,5 +1483,73 @@
 
     requestAnimationFrame(animateMeter);
   })();
+
+  // --- Q&A CHAT INTERFACE ---
+  const entryId = "{{ entry_id or '' }}";
+
+  function askSuggestion(btn) {
+    document.getElementById('qa-input').value = btn.textContent.trim();
+    submitQuestion();
+  }
+
+  async function submitQuestion() {
+    const input = document.getElementById('qa-input');
+    const question = input.value.trim();
+    if (!question) return;
+
+    input.value = '';
+    addMessage('user', question);
+
+    const loadingId = addMessage('assistant', 'Thinking...', true);
+    const sendBtn = document.querySelector('.qa-send');
+    if (sendBtn) sendBtn.disabled = true;
+
+    try {
+      const response = await fetch('/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, entry_id: entryId })
+      });
+      const data = await response.json();
+      
+      removeMessage(loadingId);
+      
+      if (data.error) {
+        addMessage('assistant', 'Error: ' + data.error);
+      } else {
+        addMessage('assistant', data.answer);
+      }
+    } catch(e) {
+      removeMessage(loadingId);
+      addMessage('assistant', 'Connection error. Please try again.');
+    }
+
+    if (sendBtn) sendBtn.disabled = false;
+    input.focus();
+  }
+
+  function addMessage(role, text, isLoading=false) {
+    const id = 'msg-' + Date.now();
+    const messages = document.getElementById('qa-messages');
+    
+    const suggestion = messages.querySelector('.qa-suggestion-row');
+    if (suggestion) suggestion.style.display = 'none';
+
+    const div = document.createElement('div');
+    div.className = `qa-message ${role}${isLoading ? ' loading' : ''}`;
+    div.id = id;
+    div.innerHTML = `
+      <div class="qa-bubble">${text.replace(/\n/g, '<br>')}</div>
+      <div class="qa-meta">${role === 'user' ? 'YOU' : 'DAE'} · ${new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'})}</div>
+    `;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+    return id;
+  }
+
+  function removeMessage(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  }
 </script>
 {% endblock %}

@@ -772,6 +772,90 @@ def download_json():
         headers={"Content-disposition": f"attachment; filename=dae-result-{int(datetime.now().timestamp())}.json"}
     )
 
+@app.route("/ask", methods=["POST"])
+def ask():
+    try:
+        data = request.get_json()
+        question = data.get("question", "").strip()
+        entry_id = data.get("entry_id")
+        
+        if not question:
+            return jsonify({"error": "No question provided"}), 400
+
+        result_data = None
+        if entry_id:
+            entry = get_history_by_id(entry_id)
+            if entry:
+                result_data = entry.get("results")
+        if not result_data and "last_result" in session:
+            result_data = session.get("last_result")
+
+        if not result_data:
+            return jsonify({"error": "No analysis results found"}), 404
+
+        # Build context from results
+        contradictions = result_data.get("contradictions", [])
+        agreements = result_data.get("agreements", [])
+        blind_spots_a = result_data.get("blind_spots_a", [])
+        blind_spots_b = result_data.get("blind_spots_b", [])
+        narrative = result_data.get("narrative", {})
+        doc_a = result_data.get("doc_a", {})
+        doc_b = result_data.get("doc_b", {})
+
+        name_a = doc_a.get("name") if isinstance(doc_a, dict) else str(doc_a)
+        name_b = doc_b.get("name") if isinstance(doc_b, dict) else str(doc_b)
+
+        context = f"""You are an expert document analyst assistant.
+You have access to the results of a comparison between two documents:
+Document A: {name_a}
+Document B: {name_b}
+
+CONTRADICTIONS FOUND ({len(contradictions)}):"""
+        
+        for i, c in enumerate(contradictions[:5], 1):
+            context += f"\n{i}. Doc A says: {c['chunk_a'][:200]}"
+            context += f"\n   Doc B says: {c['chunk_b'][:200]}"
+            context += f"\n   Verdict: {c['verdict']} — {c['reason']}"
+
+        context += f"\n\nAGREEMENTS FOUND ({len(agreements)}):"
+        for i, a in enumerate(agreements[:5], 1):
+            context += f"\n{i}. Both agree: {a['reason']}"
+
+        context += f"\n\nTOPICS ONLY IN DOC A:"
+        for b in blind_spots_a[:3]:
+            context += f"\n- {b}"
+
+        context += f"\n\nTOPICS ONLY IN DOC B:"
+        for b in blind_spots_b[:3]:
+            context += f"\n- {b}"
+
+        if narrative.get("sections"):
+            overview = narrative["sections"].get("DOCUMENT OVERVIEW", "")
+            if overview:
+                context += f"\n\nDOCUMENT OVERVIEW: {overview}"
+
+        llm = ChatGroq(
+            model_name="llama-3.1-8b-instant",
+            api_key=os.getenv("GROQ_API_KEY")
+        )
+
+        messages = [
+            {"role": "system", "content": context + "\n\nAnswer questions about these documents concisely and accurately. Reference specific findings when relevant. If asked something not covered by the analysis, say so clearly."},
+            {"role": "user", "content": question}
+        ]
+
+        response = llm.invoke(messages)
+        answer = getattr(response, "content", str(response))
+
+        return jsonify({
+            "answer": answer,
+            "question": question
+        })
+
+    except Exception as e:
+        logging.error(f"Ask route error: {e}")
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/history")
 def history_page():
     entries = load_history_entries()
