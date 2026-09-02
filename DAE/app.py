@@ -9,15 +9,6 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 
-# LangChain and ML imports
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.vectorstores import FAISS
-from langchain_core.documents import Document
-from langchain_core.prompts import PromptTemplate
-from langchain_groq import ChatGroq
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-
 logging.basicConfig(level=logging.INFO)
 
 load_dotenv(dotenv_path=Path(__file__).parent / ".env")
@@ -57,6 +48,10 @@ def api_check():
 
 @app.route("/api/test-analyze")
 def test_analyze():
+    from langchain_community.vectorstores import FAISS
+    from langchain_core.documents import Document
+    from langchain_groq import ChatGroq
+    from langchain_huggingface import HuggingFaceEmbeddings
     results = {}
     try:
         emb = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
@@ -100,6 +95,13 @@ def test_analyze():
 
 def process_documents(file_a, file_b):
     try:
+        from langchain_community.document_loaders import PyPDFLoader
+        from langchain_community.vectorstores import FAISS
+        from langchain_core.prompts import PromptTemplate
+        from langchain_groq import ChatGroq
+        from langchain_huggingface import HuggingFaceEmbeddings
+        from langchain_text_splitters import RecursiveCharacterTextSplitter
+
         emb = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         llm = ChatGroq(
             model_name="llama-3.1-8b-instant",
@@ -223,6 +225,7 @@ REASON: [One sentence explanation]"""
 
 def generate_narrative(doc_a_name, doc_b_name, results):
     try:
+        from langchain_groq import ChatGroq
         llm = ChatGroq(
             model_name="llama-3.1-8b-instant",
             api_key=os.getenv("GROQ_API_KEY")
@@ -1018,6 +1021,7 @@ CONTRADICTIONS FOUND ({len(contradictions)}):"""
             if overview:
                 context += f"\n\nDOCUMENT OVERVIEW: {overview}"
 
+        from langchain_groq import ChatGroq
         llm = ChatGroq(
             model_name="llama-3.1-8b-instant",
             api_key=os.getenv("GROQ_API_KEY")
@@ -1063,4 +1067,4 @@ if __name__ == "__main__":
     os.makedirs("history", exist_ok=True)
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
     os.makedirs(app.config["HISTORY_FOLDER"], exist_ok=True)
-    app.run(debug=True, port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=True)
