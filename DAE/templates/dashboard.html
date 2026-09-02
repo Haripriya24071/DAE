@@ -547,13 +547,13 @@
         <div class="empty-state-view" id="empty-view-1" style="display:flex; flex-direction:column; align-items:center;">
           <div class="css-doc-icon"></div>
           <div class="upload-title-empty">DOCUMENT 01</div>
-          <div class="upload-sub-empty">DROP PDF OR CLICK</div>
+          <div class="upload-sub-empty">DROP PDF / DOCX / TXT</div>
         </div>
         <div class="loaded-state-view" id="loaded-view-1" style="display:none; flex-direction:column; align-items:center;">
           <div class="upload-filename-loaded" id="filename-1">doc1.pdf</div>
           <div class="upload-size-loaded" id="filesize-1">145 KB</div>
         </div>
-        <input type="file" id="file-1" name="doc_a" accept=".pdf" style="display:none">
+        <input type="file" id="file-1" name="doc_a" accept=".pdf,.docx,.txt" style="display:none">
       </div>
 
       <div class="upload-zone" id="zone-2" data-slot="2">
@@ -561,13 +561,13 @@
         <div class="empty-state-view" id="empty-view-2" style="display:flex; flex-direction:column; align-items:center;">
           <div class="css-doc-icon"></div>
           <div class="upload-title-empty">DOCUMENT 02</div>
-          <div class="upload-sub-empty">DROP PDF OR CLICK</div>
+          <div class="upload-sub-empty">DROP PDF / DOCX / TXT</div>
         </div>
         <div class="loaded-state-view" id="loaded-view-2" style="display:none; flex-direction:column; align-items:center;">
           <div class="upload-filename-loaded" id="filename-2">doc2.pdf</div>
           <div class="upload-size-loaded" id="filesize-2">189 KB</div>
         </div>
-        <input type="file" id="file-2" name="doc_b" accept=".pdf" style="display:none">
+        <input type="file" id="file-2" name="doc_b" accept=".pdf,.docx,.txt" style="display:none">
       </div>
     </div>
 
@@ -582,14 +582,14 @@
           {% if slot > 2 %}
             <div class="upload-sub-empty" style="font-size:7px; color:#AAAAAA;">OPTIONAL</div>
           {% else %}
-            <div class="upload-sub-empty" style="font-size:7px;">DROP PDF OR CLICK</div>
+            <div class="upload-sub-empty" style="font-size:7px;">DROP PDF / DOCX / TXT</div>
           {% endif %}
         </div>
         <div class="loaded-state-view" id="multi-loaded-view-{{ slot }}" style="display:none; flex-direction:column; align-items:center;">
           <div class="upload-filename-loaded" id="multi-filename-{{ slot }}">doc{{ slot }}.pdf</div>
           <div class="upload-size-loaded" id="multi-filesize-{{ slot }}">145 KB</div>
         </div>
-        <input type="file" id="multi-file-{{ slot }}" name="doc_{{ slot }}" accept=".pdf" style="display:none">
+        <input type="file" id="multi-file-{{ slot }}" name="doc_{{ slot }}" accept=".pdf,.docx,.txt" style="display:none">
       </div>
       {% endfor %}
     </div>
@@ -777,7 +777,18 @@
     });
   });
 
+  function isValidFile(file) {
+    const name = file.name.toLowerCase();
+    return name.endsWith('.pdf') || 
+           name.endsWith('.docx') || 
+           name.endsWith('.txt');
+  }
+
   function setMultiSlotFile(slotNum, file) {
+    if (!isValidFile(file)) {
+      showError('Only PDF, DOCX, and TXT files are supported.');
+      return;
+    }
     multiFiles[slotNum] = file;
     const zone = document.getElementById(`multi-zone-${slotNum}`);
     const emptyView = document.getElementById(`multi-empty-view-${slotNum}`);
@@ -789,7 +800,10 @@
     if (emptyView) emptyView.style.display = 'none';
     if (loadedView) loadedView.style.display = 'flex';
     if (nameEl) nameEl.textContent = file.name;
-    if (sizeEl) sizeEl.textContent = formatSize(file.size);
+    
+    const ext = file.name.split('.').pop().toUpperCase();
+    const extColors = {PDF: '#CC2200', DOCX: '#185FA5', TXT: '#6B6760'};
+    if (sizeEl) sizeEl.innerHTML = `<span style="font-family:'Space Mono',monospace; font-size:8px; font-weight:bold; color:${extColors[ext] || '#6B6760'}; margin-right:6px;">${ext}</span>${formatSize(file.size)}`;
 
     updateDocsLoadedStat();
     checkReadyState();
@@ -997,6 +1011,10 @@
   });
 
   function setSlotFile(slotNum, file) {
+    if (!isValidFile(file)) {
+      showError('Only PDF, DOCX, and TXT files are supported.');
+      return;
+    }
     if (slotNum === 1) file1 = file;
     else file2 = file;
 
@@ -1010,7 +1028,10 @@
     emptyView.style.display = 'none';
     loadedView.style.display = 'flex';
     nameEl.textContent = file.name;
-    sizeEl.textContent = formatSize(file.size);
+
+    const ext = file.name.split('.').pop().toUpperCase();
+    const extColors = {PDF: '#CC2200', DOCX: '#185FA5', TXT: '#6B6760'};
+    sizeEl.innerHTML = `<span style="font-family:'Space Mono',monospace; font-size:8px; font-weight:bold; color:${extColors[ext] || '#6B6760'}; margin-right:6px;">${ext}</span>${formatSize(file.size)}`;
 
     updateDocsLoadedStat();
     checkReadyState();

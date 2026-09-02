@@ -25,7 +25,7 @@ os.makedirs(app.config["HISTORY_FOLDER"], exist_ok=True)
 os.makedirs("uploads", exist_ok=True)
 os.makedirs("history", exist_ok=True)
 
-ALLOWED_EXTENSIONS = {"pdf"}
+ALLOWED_EXTENSIONS = {"pdf", "docx", "txt"}
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -161,9 +161,40 @@ def calculate_confidence(score, verdict_text, chunk_a, chunk_b):
     
     return min(round(confidence, 1), 99.0)  # cap at 99
 
+def extract_text_from_file(filepath):
+    ext = filepath.rsplit(".", 1)[-1].lower()
+    
+    if ext == "pdf":
+        from langchain_community.document_loaders import PyPDFLoader
+        loader = PyPDFLoader(filepath)
+        return loader.load()
+    
+    elif ext == "docx":
+        try:
+            from docx import Document as DocxDocument
+            doc = DocxDocument(filepath)
+            full_text = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
+            from langchain_core.documents import Document
+            return [Document(page_content=full_text, metadata={"source": filepath})]
+        except ImportError:
+            return {"error": "python-docx not installed. Run: pip install python-docx"}
+        except Exception as e:
+            return {"error": f"Could not read DOCX: {str(e)}"}
+    
+    elif ext == "txt":
+        try:
+            with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+            from langchain_core.documents import Document
+            return [Document(page_content=content, metadata={"source": filepath})]
+        except Exception as e:
+            return {"error": f"Could not read TXT: {str(e)}"}
+    
+    else:
+        return {"error": f"Unsupported file type: .{ext}"}
+
 def process_documents(file_a, file_b):
     try:
-        from langchain_community.document_loaders import PyPDFLoader
         from langchain_community.vectorstores import FAISS
         from langchain_core.prompts import PromptTemplate
         from langchain_groq import ChatGroq
@@ -176,14 +207,20 @@ def process_documents(file_a, file_b):
             api_key=os.getenv("GROQ_API_KEY")
         )
 
-        loader_a = PyPDFLoader(file_a)
-        loader_b = PyPDFLoader(file_b)
+        raw_a = extract_text_from_file(file_a)
+        raw_b = extract_text_from_file(file_b)
+        
+        if isinstance(raw_a, dict) and raw_a.get("error"):
+            return {"error": raw_a["error"]}
+        if isinstance(raw_b, dict) and raw_b.get("error"):
+            return {"error": raw_b["error"]}
+        
         splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-        docs_a = splitter.split_documents(loader_a.load())
-        docs_b = splitter.split_documents(loader_b.load())
+        docs_a = splitter.split_documents(raw_a)
+        docs_b = splitter.split_documents(raw_b)
 
         if len(docs_a) == 0 or len(docs_b) == 0:
-            return {"error": "Could not extract text from one or both PDFs. Make sure they are not scanned images."}
+            return {"error": "Could not extract text from one or both files."}
 
         # FIX 2 - Use COSINE distance strategy
         vectorstore_a = FAISS.from_documents(docs_a, emb, distance_strategy="COSINE")
@@ -514,7 +551,7 @@ def analyze_stream():
     file_b = request.files["doc_b"]
     
     if not allowed_file(file_a.filename) or not allowed_file(file_b.filename):
-        return jsonify({"error": "Only PDF files supported"}), 400
+        return jsonify({"error": "Only PDF, DOCX, and TXT files supported"}), 400
     
     name_a = secure_filename(file_a.filename)
     name_b = secure_filename(file_b.filename)
@@ -533,14 +570,22 @@ def analyze_stream():
             yield send("progress", {"step": 1, "total": 7,
                 "message": "Loading documents...", "percent": 5})
             
-            loader_a = PyPDFLoader(path_a)
-            loader_b = PyPDFLoader(path_b)
+            raw_a = extract_text_from_file(path_a)
+            raw_b = extract_text_from_file(path_b)
+
+            if isinstance(raw_a, dict) and raw_a.get("error"):
+                yield send("error", {"message": raw_a["error"]})
+                return
+            if isinstance(raw_b, dict) and raw_b.get("error"):
+                yield send("error", {"message": raw_b["error"]})
+                return
+
             splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-            docs_a = splitter.split_documents(loader_a.load())
-            docs_b = splitter.split_documents(loader_b.load())
+            docs_a = splitter.split_documents(raw_a)
+            docs_b = splitter.split_documents(raw_b)
 
             if not docs_a or not docs_b:
-                yield send("error", {"message": "Could not extract text from PDFs."})
+                yield send("error", {"message": "Could not extract text from files."})
                 return
 
             yield send("progress", {"step": 2, "total": 7,
@@ -748,11 +793,10 @@ def analyze_multi():
                     files.append(f)
 
         if len(files) < 2:
-            return jsonify({"error": "At least 2 PDF files required"}), 400
+            return jsonify({"error": "At least 2 PDF, DOCX, or TXT files required"}), 400
         if len(files) > 5:
             return jsonify({"error": "Maximum 5 documents"}), 400
 
-        from langchain_community.document_loaders import PyPDFLoader
         from langchain_text_splitters import RecursiveCharacterTextSplitter
         from langchain_community.vectorstores import FAISS
         from langchain_huggingface import HuggingFaceEmbeddings
@@ -784,8 +828,10 @@ def analyze_multi():
         vectorstores = []
         
         for path in saved_paths:
-            loader = PyPDFLoader(path)
-            docs = splitter.split_documents(loader.load())
+            raw_docs = extract_text_from_file(path)
+            if isinstance(raw_docs, dict) and raw_docs.get("error"):
+                return jsonify({"error": raw_docs["error"]}), 400
+            docs = splitter.split_documents(raw_docs)
             all_docs.append(docs)
             vs = FAISS.from_documents(docs, emb, distance_strategy="COSINE")
             vectorstores.append(vs)
@@ -1045,6 +1091,533 @@ def download_json():
         mimetype="application/json",
         headers={"Content-disposition": f"attachment; filename=dae-result-{int(datetime.now().timestamp())}.json"}
     )
+
+@app.route("/download/pdf")
+def download_pdf():
+    try:
+        from weasyprint import HTML as WeasyHTML, CSS
+        
+        entry_id = request.args.get("id")
+        result_data = None
+        doc_info = {}
+        
+        if entry_id:
+            entry = get_history_by_id(entry_id)
+            if entry:
+                result_data = entry.get("results")
+                doc_info = {
+                    "a": entry.get("doc_a"),
+                    "b": entry.get("doc_b"),
+                    "timestamp": entry.get("timestamp")
+                }
+        if not result_data and "last_result" in session:
+            result_data = session.get("last_result")
+            doc_info = {
+                "a": result_data.get("doc_a", {}).get("name")
+                     if isinstance(result_data.get("doc_a"), dict)
+                     else result_data.get("doc_a"),
+                "b": result_data.get("doc_b", {}).get("name")
+                     if isinstance(result_data.get("doc_b"), dict)
+                     else result_data.get("doc_b")
+            }
+
+        if not result_data:
+            return "No results found", 404
+
+        narrative = result_data.get("narrative", {})
+        sections = narrative.get("sections", {})
+        contradictions = result_data.get("contradictions", [])
+        agreements = result_data.get("agreements", [])
+        blind_spots_a = result_data.get("blind_spots_a", [])
+        blind_spots_b = result_data.get("blind_spots_b", [])
+        score_range = result_data.get("score_range", {})
+        
+        name_a = doc_info.get("a", "Document A")
+        name_b = doc_info.get("b", "Document B")
+        generated_at = datetime.now().strftime("%d %B %Y, %H:%M")
+
+        severity_order = {"CRITICAL": 0, "SIGNIFICANT": 1, "MINOR": 2}
+
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500&family=Space+Mono:wght@400;700&display=swap');
+  
+  * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+  
+  body {{
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11pt;
+    color: #0A0A0A;
+    background: white;
+    line-height: 1.6;
+  }}
+
+  @page {{
+    size: A4;
+    margin: 20mm 15mm;
+    @top-right {{
+      content: "DAE Report — " string(doc-pair);
+      font-family: 'Space Mono', monospace;
+      font-size: 7pt;
+      color: #AAAAAA;
+    }}
+    @bottom-center {{
+      content: counter(page) " / " counter(pages);
+      font-family: 'Space Mono', monospace;
+      font-size: 7pt;
+      color: #AAAAAA;
+    }}
+  }}
+
+  .report-header {{
+    border-bottom: 2px solid #0A0A0A;
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }}
+
+  .report-logo {{
+    font-family: 'Space Mono', monospace;
+    font-size: 18pt;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: #0A0A0A;
+  }}
+
+  .report-meta {{
+    font-family: 'Space Mono', monospace;
+    font-size: 8pt;
+    color: #6B6760;
+    text-align: right;
+    line-height: 1.8;
+  }}
+
+  .doc-pair {{
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 12px 16px;
+    border: 1px solid #D4CFC4;
+    background: #F5F0E8;
+  }}
+
+  .doc-pill {{
+    font-family: 'Space Mono', monospace;
+    font-size: 8pt;
+    padding: 4px 10px;
+    border: 1px solid #C4BFB4;
+    background: white;
+    color: #0A0A0A;
+  }}
+
+  .doc-vs {{
+    font-family: 'Space Mono', monospace;
+    font-size: 8pt;
+    color: #AAAAAA;
+  }}
+
+  .stats-row {{
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+  }}
+
+  .stat-box {{
+    flex: 1;
+    border: 1px solid #D4CFC4;
+    padding: 12px 14px;
+  }}
+
+  .stat-value {{
+    font-family: 'Space Mono', monospace;
+    font-size: 22pt;
+    font-weight: 700;
+    color: #0A0A0A;
+    display: block;
+  }}
+
+  .stat-value.red {{ color: #CC2200; }}
+  .stat-value.green {{ color: #1A6B00; }}
+
+  .stat-label {{
+    font-family: 'Space Mono', monospace;
+    font-size: 7pt;
+    letter-spacing: 2px;
+    color: #AAAAAA;
+    display: block;
+    margin-top: 4px;
+  }}
+
+  .section-label {{
+    font-family: 'Space Mono', monospace;
+    font-size: 7pt;
+    letter-spacing: 4px;
+    color: #AAAAAA;
+    margin-bottom: 6px;
+    margin-top: 24px;
+    display: block;
+  }}
+
+  .narrative-block {{
+    margin-bottom: 16px;
+    padding-left: 12px;
+    border-left: 3px solid #0A0A0A;
+  }}
+
+  .narrative-block.green {{ border-left-color: #1A6B00; }}
+  .narrative-block.red {{ border-left-color: #CC2200; }}
+  .narrative-block.amber {{ border-left-color: #996600; }}
+
+  .narrative-section-label {{
+    font-family: 'Space Mono', monospace;
+    font-size: 7pt;
+    letter-spacing: 3px;
+    margin-bottom: 6px;
+    display: block;
+  }}
+
+  .narrative-block.green .narrative-section-label {{ color: #1A6B00; }}
+  .narrative-block.red .narrative-section-label {{ color: #CC2200; }}
+  .narrative-block.amber .narrative-section-label {{ color: #996600; }}
+  .narrative-block .narrative-section-label {{ color: #0A0A0A; }}
+
+  .narrative-text {{
+    font-size: 10pt;
+    color: #0A0A0A;
+    line-height: 1.7;
+  }}
+
+  .finding-card {{
+    border: 1px solid #D4CFC4;
+    margin-bottom: 12px;
+    page-break-inside: avoid;
+  }}
+
+  .finding-card-top {{
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid #E4E0D5;
+  }}
+
+  .finding-col {{
+    flex: 1;
+    padding: 10px 12px;
+  }}
+
+  .finding-col:first-child {{
+    border-right: 1px solid #E4E0D5;
+  }}
+
+  .finding-col-label {{
+    font-family: 'Space Mono', monospace;
+    font-size: 7pt;
+    letter-spacing: 2px;
+    color: #AAAAAA;
+    display: block;
+    margin-bottom: 6px;
+  }}
+
+  .finding-col-text {{
+    font-size: 9pt;
+    color: #0A0A0A;
+    line-height: 1.5;
+  }}
+
+  .finding-card-bottom {{
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #FAFAF8;
+  }}
+
+  .verdict-badge {{
+    font-family: 'Space Mono', monospace;
+    font-size: 7pt;
+    padding: 2px 8px;
+    border: 1px solid;
+  }}
+
+  .badge-disagree {{
+    color: #CC2200;
+    border-color: rgba(204,34,0,0.4);
+    background: rgba(204,34,0,0.06);
+  }}
+
+  .badge-agree {{
+    color: #1A6B00;
+    border-color: rgba(26,107,0,0.4);
+    background: rgba(26,107,0,0.06);
+  }}
+
+  .badge-partial {{
+    color: #996600;
+    border-color: rgba(153,102,0,0.4);
+    background: rgba(153,102,0,0.06);
+  }}
+
+  .severity-badge {{
+    font-family: 'Space Mono', monospace;
+    font-size: 7pt;
+    padding: 2px 8px;
+    border: 1px solid;
+  }}
+
+  .sev-critical {{
+    color: #CC2200;
+    border-color: rgba(204,34,0,0.4);
+    background: rgba(204,34,0,0.06);
+  }}
+
+  .sev-significant {{
+    color: #996600;
+    border-color: rgba(153,102,0,0.4);
+    background: rgba(153,102,0,0.06);
+  }}
+
+  .sev-minor {{
+    color: #1A6B00;
+    border-color: rgba(26,107,0,0.4);
+    background: rgba(26,107,0,0.06);
+  }}
+
+  .confidence-text {{
+    font-family: 'Space Mono', monospace;
+    font-size: 7pt;
+    color: #AAAAAA;
+    margin-left: auto;
+  }}
+
+  .finding-reason {{
+    font-size: 9pt;
+    color: #6B6760;
+    line-height: 1.5;
+  }}
+
+  .blind-spot-cols {{
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+  }}
+
+  .blind-spot-col {{
+    flex: 1;
+    border: 1px solid #D4CFC4;
+    padding: 12px;
+  }}
+
+  .blind-spot-col-label {{
+    font-family: 'Space Mono', monospace;
+    font-size: 7pt;
+    letter-spacing: 2px;
+    color: #AAAAAA;
+    display: block;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #E4E0D5;
+    padding-bottom: 6px;
+  }}
+
+  .blind-spot-item {{
+    font-size: 9pt;
+    color: #0A0A0A;
+    line-height: 1.5;
+    padding: 6px 0;
+    border-bottom: 1px solid #F0EDE8;
+  }}
+
+  .blind-spot-item:last-child {{ border-bottom: none; }}
+
+  .similarity-section {{
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 16px;
+    border: 1px solid #D4CFC4;
+    margin-bottom: 24px;
+    background: #F5F0E8;
+  }}
+
+  .similarity-score {{
+    font-family: 'Space Mono', monospace;
+    font-size: 36pt;
+    font-weight: 700;
+    color: #996600;
+  }}
+
+  .similarity-label {{
+    font-family: 'Space Mono', monospace;
+    font-size: 7pt;
+    letter-spacing: 3px;
+    color: #AAAAAA;
+  }}
+
+  .page-break {{ page-break-before: always; }}
+</style>
+</head>
+<body>
+
+<div class="report-header">
+  <div class="report-logo">[ DAE ]</div>
+  <div class="report-meta">
+    DATA ANALYSER ENGINE<br>
+    Analysis Report<br>
+    {generated_at}
+  </div>
+</div>
+
+<div class="doc-pair">
+  <span class="doc-pill">{name_a}</span>
+  <span class="doc-vs">VS</span>
+  <span class="doc-pill">{name_b}</span>
+</div>
+
+<div class="stats-row">
+  <div class="stat-box">
+    <span class="stat-value {'red' if contradictions else ''}">{len(contradictions)}</span>
+    <span class="stat-label">CONTRADICTIONS</span>
+  </div>
+  <div class="stat-box">
+    <span class="stat-value {'green' if agreements else ''}">{len(agreements)}</span>
+    <span class="stat-label">AGREEMENTS</span>
+  </div>
+  <div class="stat-box">
+    <span class="stat-value">{len(blind_spots_a) + len(blind_spots_b)}</span>
+    <span class="stat-label">BLIND SPOTS</span>
+  </div>
+  <div class="stat-box">
+    <span class="stat-value">{result_data.get('total_chunks_a', 0) + result_data.get('total_chunks_b', 0)}</span>
+    <span class="stat-label">CHUNKS ANALYSED</span>
+  </div>
+</div>
+
+<div class="similarity-section">
+  <div class="similarity-score">{score_range.get('max', 0)}%</div>
+  <div>
+    <div class="similarity-label">SIMILARITY INDEX</div>
+    <div style="font-size:10pt;color:#6B6760;margin-top:4px">
+      Match range: {score_range.get('min', 0)}% — {score_range.get('max', 0)}%
+    </div>
+  </div>
+</div>
+"""
+
+        narrative_colors = {
+            "DOCUMENT OVERVIEW": ("", ""),
+            "KEY FINDINGS": ("green", "green"),
+            "CONTRADICTIONS ANALYSIS": ("red", "red"),
+            "AGREEMENTS ANALYSIS": ("green", "green"),
+            "BLIND SPOTS": ("amber", "amber"),
+            "CONCLUSION": ("", ""),
+        }
+
+        if sections:
+            html_content += '<span class="section-label">ANALYSIS NARRATIVE</span>'
+            for section_name, (block_class, _) in narrative_colors.items():
+                text = sections.get(section_name, "")
+                if text:
+                    html_content += f"""
+<div class="narrative-block {block_class}">
+  <span class="narrative-section-label">{section_name}</span>
+  <div class="narrative-text">{text.replace(chr(10), '<br>')}</div>
+</div>"""
+
+        if contradictions:
+            html_content += '<div class="page-break"></div>'
+            html_content += f'<span class="section-label">CONTRADICTIONS ({len(contradictions)} FOUND)</span>'
+            for i, c in enumerate(contradictions, 1):
+                verdict = c.get("verdict", "DISAGREE")
+                severity = c.get("severity", "SIGNIFICANT")
+                confidence = c.get("confidence", 75)
+                
+                badge_class = "badge-disagree" if "DISAGREE" in verdict else \
+                              "badge-agree" if "AGREE" in verdict and "PARTIALLY" not in verdict else \
+                              "badge-partial"
+                sev_class = f"sev-{severity.lower()}"
+                
+                html_content += f"""
+<div class="finding-card">
+  <div class="finding-card-top">
+    <div class="finding-col">
+      <span class="finding-col-label">DOC A</span>
+      <span class="finding-col-text">{c.get('chunk_a', '')[:300]}</span>
+    </div>
+    <div class="finding-col">
+      <span class="finding-col-label">DOC B</span>
+      <span class="finding-col-text">{c.get('chunk_b', '')[:300]}</span>
+    </div>
+  </div>
+  <div class="finding-card-bottom">
+    <span class="verdict-badge {badge_class}">{verdict}</span>
+    <span class="severity-badge {sev_class}">{severity}</span>
+    <span class="finding-reason">{c.get('reason', '')}</span>
+    <span class="confidence-text">{confidence}% confidence</span>
+  </div>
+</div>"""
+
+        if agreements:
+            html_content += f'<span class="section-label">AGREEMENTS ({len(agreements)} FOUND)</span>'
+            for i, a in enumerate(agreements, 1):
+                verdict = a.get("verdict", "AGREE")
+                confidence = a.get("confidence", 75)
+                badge_class = "badge-agree" if "AGREE" in verdict and "PARTIALLY" not in verdict else "badge-partial"
+                html_content += f"""
+<div class="finding-card">
+  <div class="finding-card-top">
+    <div class="finding-col">
+      <span class="finding-col-label">DOC A</span>
+      <span class="finding-col-text">{a.get('chunk_a', '')[:300]}</span>
+    </div>
+    <div class="finding-col">
+      <span class="finding-col-label">DOC B</span>
+      <span class="finding-col-text">{a.get('chunk_b', '')[:300]}</span>
+    </div>
+  </div>
+  <div class="finding-card-bottom">
+    <span class="verdict-badge {badge_class}">{verdict}</span>
+    <span class="finding-reason">{a.get('reason', '')}</span>
+    <span class="confidence-text">{confidence}% confidence</span>
+  </div>
+</div>"""
+
+        if blind_spots_a or blind_spots_b:
+            html_content += f'<span class="section-label">BLIND SPOTS</span>'
+            html_content += '<div class="blind-spot-cols">'
+            html_content += f'<div class="blind-spot-col"><span class="blind-spot-col-label">ONLY IN {name_a[:30]}</span>'
+            for b in blind_spots_a:
+                html_content += f'<div class="blind-spot-item">{b}</div>'
+            html_content += '</div>'
+            html_content += f'<div class="blind-spot-col"><span class="blind-spot-col-label">ONLY IN {name_b[:30]}</span>'
+            for b in blind_spots_b:
+                html_content += f'<div class="blind-spot-item">{b}</div>'
+            html_content += '</div></div>'
+
+        html_content += "</body></html>"
+
+        pdf_bytes = WeasyHTML(string=html_content).write_pdf()
+        
+        timestamp = int(datetime.now().timestamp())
+        return Response(
+            pdf_bytes,
+            mimetype="application/pdf",
+            headers={
+                "Content-Disposition": 
+                    f"attachment; filename=dae-report-{timestamp}.pdf",
+                "Content-Type": "application/pdf"
+            }
+        )
+
+    except ImportError:
+        return "WeasyPrint not installed. Run: pip install weasyprint", 500
+    except Exception as e:
+        logging.error(f"PDF generation error: {e}")
+        return f"PDF generation failed: {str(e)}", 500
 
 @app.route("/ask", methods=["POST"])
 def ask():

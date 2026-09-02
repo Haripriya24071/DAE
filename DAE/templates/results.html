@@ -930,6 +930,7 @@
     </div>
 
     <div class="top-actions-right">
+      <a href="{% if entry_id %}/download/pdf?id={{ entry_id }}{% else %}/download/pdf{% endif %}" class="action-btn-top {% if not result %}disabled{% endif %}">[↓ PDF]</a>
       <a href="{% if entry_id %}/download/json?id={{ entry_id }}{% else %}/download/json{% endif %}" class="action-btn-top {% if not result %}disabled{% endif %}">[↓ JSON]</a>
       <a href="{% if entry_id %}/download/txt?id={{ entry_id }}{% else %}/download/txt{% endif %}" class="action-btn-top {% if not result %}disabled{% endif %}">[↓ TXT]</a>
       <button class="action-btn-top" onclick="window.print()">[PRINT]</button>
@@ -1397,6 +1398,7 @@
       <!-- DOWNLOAD SECTION -->
       <div class="summary-title-tag" style="margin-bottom:12px;">DOWNLOAD RESULTS</div>
       <div class="download-section">
+        <a href="{% if entry_id %}/download/pdf?id={{ entry_id }}{% else %}/download/pdf{% endif %}" class="btn-download-full {% if not result %}disabled{% endif %}">[DOWNLOAD AS PDF REPORT ↓]</a>
         <a href="{% if entry_id %}/download/json?id={{ entry_id }}{% else %}/download/json{% endif %}" class="btn-download-full {% if not result %}disabled{% endif %}">[DOWNLOAD AS JSON ↓]</a>
         <a href="{% if entry_id %}/download/txt?id={{ entry_id }}{% else %}/download/txt{% endif %}" class="btn-download-full {% if not result %}disabled{% endif %}">[DOWNLOAD AS TXT ↓]</a>
       </div>
