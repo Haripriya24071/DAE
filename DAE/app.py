@@ -89,7 +89,8 @@ def test_analyze():
     
     try:
         matches = vs.similarity_search_with_score("notice period", k=1)
-        results["step4_similarity"] = f"ok - score: {round(matches[0][1], 3)}"
+        sim_score = round(matches[0][1], 3)
+        results["step4_similarity"] = f"ok - score: {sim_score}"
     except Exception as e:
         results["step4_similarity"] = str(e)
         return jsonify(results)
@@ -380,9 +381,9 @@ def dashboard():
     history = load_history_entries()
     return render_template("dashboard.html", recent_history=history[:5])
 
-@app.route("/compare", methods=["POST"])
-@app.route("/analyze", methods=["POST"])
-def analyze():
+@app.route("/analyze-legacy", methods=["POST"])
+@app.route("/compare-legacy", methods=["POST"])
+def analyze_legacy():
     try:
         if "doc_a" not in request.files or "doc_b" not in request.files:
             return jsonify({"error": "Both PDF files (Document A and Document B) are required."}), 400
@@ -425,6 +426,232 @@ def analyze():
     except Exception as e:
         logging.error(f"Error in /analyze route: {e}")
         return jsonify({"error": str(e)}), 500
+
+@app.route("/analyze-stream", methods=["POST"])
+@app.route("/analyze", methods=["POST"])
+@app.route("/compare", methods=["POST"])
+def analyze_stream():
+    if "doc_a" not in request.files or "doc_b" not in request.files:
+        return jsonify({"error": "Both files required"}), 400
+    
+    file_a = request.files["doc_a"]
+    file_b = request.files["doc_b"]
+    
+    if not allowed_file(file_a.filename) or not allowed_file(file_b.filename):
+        return jsonify({"error": "Only PDF files supported"}), 400
+    
+    name_a = secure_filename(file_a.filename)
+    name_b = secure_filename(file_b.filename)
+    path_a = os.path.join(app.config["UPLOAD_FOLDER"], f"{str(uuid.uuid4())[:6]}_{name_a}")
+    path_b = os.path.join(app.config["UPLOAD_FOLDER"], f"{str(uuid.uuid4())[:6]}_{name_b}")
+    
+    file_a.save(path_a)
+    file_b.save(path_b)
+    
+    def generate():
+        try:
+            def send(event, data):
+                return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+            
+            # Step 1
+            yield send("progress", {"step": 1, "total": 7,
+                "message": "Loading documents...", "percent": 5})
+            
+            loader_a = PyPDFLoader(path_a)
+            loader_b = PyPDFLoader(path_b)
+            splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+            docs_a = splitter.split_documents(loader_a.load())
+            docs_b = splitter.split_documents(loader_b.load())
+
+            if not docs_a or not docs_b:
+                yield send("error", {"message": "Could not extract text from PDFs."})
+                return
+
+            yield send("progress", {"step": 2, "total": 7,
+                "message": f"Loaded {len(docs_a)} chunks from Doc A, {len(docs_b)} from Doc B",
+                "percent": 15})
+
+            # Step 2 — Build embeddings
+            yield send("progress", {"step": 3, "total": 7,
+                "message": "Building vector stores...", "percent": 25})
+            
+            emb = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+            vectorstore_a = FAISS.from_documents(docs_a, emb, distance_strategy="COSINE")
+            vectorstore_b = FAISS.from_documents(docs_b, emb, distance_strategy="COSINE")
+
+            yield send("progress", {"step": 4, "total": 7,
+                "message": "Vector stores ready. Running similarity search...",
+                "percent": 35})
+
+            # Step 3 — LLM setup
+            llm = ChatGroq(
+                model_name="llama-3.1-8b-instant",
+                api_key=os.getenv("GROQ_API_KEY")
+            )
+            prompt = PromptTemplate(
+                input_variables=["text_a", "text_b"],
+                template="""Compare these two excerpts from different documents.
+
+Excerpt A: {text_a}
+
+Excerpt B: {text_b}
+
+Respond in exactly this format:
+VERDICT: [AGREE / DISAGREE / PARTIALLY AGREE]
+REASON: [One sentence explanation]"""
+            )
+            chain = prompt | llm
+
+            contradictions = []
+            agreements = []
+            all_scores = []
+            seen_pairs = set()
+            total_chunks = len(docs_a)
+            processed = 0
+
+            # Step 4 — Process chunks, stream each finding
+            for chunk in docs_a:
+                try:
+                    match = vectorstore_b.similarity_search_with_score(
+                        chunk.page_content, k=1)
+                    if not match:
+                        continue
+                    best_match, score = match[0]
+                    all_scores.append(float(score))
+                    pair_key = (chunk.page_content[:80], best_match.page_content[:80])
+                    if pair_key in seen_pairs:
+                        continue
+                    seen_pairs.add(pair_key)
+
+                    processed += 1
+                    percent = 35 + int((processed / total_chunks) * 40)
+                    yield send("progress", {
+                        "step": 5, "total": 7,
+                        "message": f"Analysing chunk {processed}/{total_chunks}...",
+                        "percent": percent
+                    })
+
+                    if float(score) < 0.5:
+                        response = chain.invoke({
+                            "text_a": chunk.page_content,
+                            "text_b": best_match.page_content
+                        })
+                        verdict_text = getattr(response, "content", str(response))
+                        verdict = "PARTIALLY AGREE"
+                        reason = verdict_text
+                        if "VERDICT:" in verdict_text:
+                            for line in verdict_text.split("\n"):
+                                if line.startswith("VERDICT:"):
+                                    verdict = line.replace("VERDICT:", "").strip()
+                                if line.startswith("REASON:"):
+                                    reason = line.replace("REASON:", "").strip()
+
+                        entry = {
+                            "chunk_a": chunk.page_content,
+                            "chunk_b": best_match.page_content,
+                            "score": float(round(score, 3)),
+                            "verdict": verdict,
+                            "reason": reason
+                        }
+
+                        if "DISAGREE" in verdict:
+                            contradictions.append(entry)
+                            # Stream contradiction immediately
+                            yield send("contradiction", {
+                                "index": len(contradictions),
+                                "data": entry
+                            })
+                        else:
+                            agreements.append(entry)
+                            # Stream agreement immediately
+                            yield send("agreement", {
+                                "index": len(agreements),
+                                "data": entry
+                            })
+
+                except Exception as chunk_err:
+                    logging.error(f"Chunk error: {chunk_err}")
+                    continue
+
+            # Step 5 — Blind spots
+            yield send("progress", {"step": 6, "total": 7,
+                "message": "Detecting blind spots...", "percent": 78})
+
+            blind_spots_a = []
+            blind_spots_b = []
+            for chunk in docs_a:
+                try:
+                    match = vectorstore_b.similarity_search_with_score(
+                        chunk.page_content, k=1)
+                    if match and float(match[0][1]) > 0.6:
+                        blind_spots_a.append(chunk.page_content[:200])
+                except:
+                    continue
+
+            for chunk in docs_b:
+                try:
+                    match = vectorstore_a.similarity_search_with_score(
+                        chunk.page_content, k=1)
+                    if match and float(match[0][1]) > 0.6:
+                        blind_spots_b.append(chunk.page_content[:200])
+                except:
+                    continue
+
+            for bs in blind_spots_a[:5]:
+                yield send("blind_spot_a", {"text": bs})
+            for bs in blind_spots_b[:5]:
+                yield send("blind_spot_b", {"text": bs})
+
+            # Step 6 — Narrative
+            yield send("progress", {"step": 7, "total": 7,
+                "message": "Generating narrative report...", "percent": 88})
+
+            results = {
+                "contradictions": contradictions[:10],
+                "agreements": agreements[:10],
+                "blind_spots_a": blind_spots_a[:5],
+                "blind_spots_b": blind_spots_b[:5],
+                "total_chunks_a": len(docs_a),
+                "total_chunks_b": len(docs_b),
+                "score_range": {
+                    "min": float(round((1 - max(all_scores)) * 100, 1)) if all_scores else 0,
+                    "max": float(round((1 - min(all_scores)) * 100, 1)) if all_scores else 0
+                }
+            }
+
+            narrative = generate_narrative(name_a, name_b, results)
+            results["narrative"] = narrative
+            results["doc_a"] = {"name": name_a}
+            results["doc_b"] = {"name": name_b}
+
+            history_id = save_history_entry(name_a, name_b, results)
+            session["last_result"] = results
+            session["last_id"] = history_id
+
+            yield send("complete", {
+                "id": history_id,
+                "redirect_url": f"/result?id={history_id}",
+                "summary": {
+                    "contradictions": len(contradictions),
+                    "agreements": len(agreements),
+                    "blind_spots": len(blind_spots_a) + len(blind_spots_b),
+                    "chunks": len(docs_a) + len(docs_b)
+                }
+            })
+
+        except Exception as e:
+            logging.error(f"Stream error: {e}")
+            yield f"event: error\ndata: {json.dumps({'message': str(e)})}\n\n"
+
+    return Response(
+        generate(),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive"
+        }
+    )
 
 @app.route("/results")
 @app.route("/result")

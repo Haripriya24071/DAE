@@ -407,6 +407,85 @@
     justify-content: space-between;
     border-bottom: 1px solid #CC2200;
   }
+  /* STREAM OVERLAY */
+  .stream-overlay {
+    position: absolute;
+    inset: 0;
+    background: #F5F0E8;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    z-index: 10;
+  }
+  .stream-overlay.active { display: flex; }
+
+  .stream-step-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 4px;
+    color: #AAAAAA;
+  }
+
+  .stream-counters {
+    display: flex;
+    gap: 48px;
+    align-items: flex-end;
+  }
+
+  .stream-counter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .stream-counter-value {
+    font-family: 'Space Mono', monospace;
+    font-size: 56px;
+    font-weight: 500;
+    line-height: 1;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .stream-counter-value.flash {
+    transform: scale(1.2);
+  }
+
+  .stream-counter-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 3px;
+    color: #AAAAAA;
+  }
+
+  .stream-progress-wrap {
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .stream-progress-track {
+    width: 100%;
+    height: 2px;
+    background: #D4CFC4;
+  }
+
+  .stream-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: #0A0A0A;
+    transition: width 0.4s ease;
+  }
+
+  .stream-progress-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: #6B6760;
+    letter-spacing: 1px;
+  }
 </style>
 {% endblock %}
 
@@ -542,6 +621,36 @@
   <!-- RIGHT MAIN AREA -->
   <section class="right-main-area" id="canvas-container">
     <canvas id="main-canvas"></canvas>
+    
+    <!-- STREAM OVERLAY -->
+    <div id="stream-overlay" class="stream-overlay">
+      <div class="stream-step-label" id="stream-step">STEP 1 / 7</div>
+      
+      <div class="stream-counters">
+        <div class="stream-counter">
+          <div class="stream-counter-value" id="live-contradictions" style="color: #CC2200">0</div>
+          <div class="stream-counter-label">CONTRADICTIONS</div>
+        </div>
+        <div class="stream-counter">
+          <div class="stream-counter-value" id="live-agreements" style="color: #1A6B00">0</div>
+          <div class="stream-counter-label">AGREEMENTS</div>
+        </div>
+        <div class="stream-counter">
+          <div class="stream-counter-value" id="live-blind_spots" style="color: #996600">0</div>
+          <div class="stream-counter-label">BLIND SPOTS</div>
+        </div>
+      </div>
+
+      <div class="stream-progress-wrap">
+        <div class="stream-progress-track">
+          <div class="stream-progress-fill" id="stream-progress-fill"></div>
+        </div>
+        <div class="stream-progress-label" id="stream-progress-label">
+          Preparing analysis...
+        </div>
+      </div>
+    </div>
+
     <div class="overlay-buttons">
       <button class="overlay-btn" onclick="resetSlots()">[RESET]</button>
       <button class="overlay-btn" onclick="exportPNG()">[EXPORT PNG]</button>
@@ -724,87 +833,193 @@
     row.setAttribute('data-on', isCurrentlyOn ? 'false' : 'true');
   }
 
-  // --- FETCH & EXECUTE ANALYSIS ---
-  let progressTimer = null;
-  const steps = [
-    "Loading documents...",
-    "Splitting into chunks...",
-    "Building vector stores...",
-    "Running similarity search...",
-    "Detecting contradictions...",
-    "Compiling results..."
-  ];
+  // --- STREAMING ANALYSIS ---
+  let liveContradictions = [];
+  let liveAgreements = [];
+  let liveBlindSpotsA = [];
+  let liveBlindSpotsB = [];
 
   function handleRunAnalysis() {
     if (!file1 || !file2) return;
+    runAnalysis();
+  }
 
-    currentState = 3;
-    document.getElementById('stat-status').textContent = 'LOADING';
-    btnRun.disabled = true;
-
-    // Show Progress Box
-    const progressBox = document.getElementById('progress-box');
-    const stepText = document.getElementById('progress-step-text');
-    const fillEl = document.getElementById('progress-fill');
-    progressBox.classList.add('visible');
-
-    let currentStepIdx = 0;
-    fillEl.style.width = '10%';
-    stepText.textContent = steps[0];
-
-    // Cycle step labels every 8s
-    progressTimer = setInterval(() => {
-      currentStepIdx = (currentStepIdx + 1) % steps.length;
-      stepText.textContent = steps[currentStepIdx];
-      const widthPct = Math.min(90, 15 + currentStepIdx * 15);
-      fillEl.style.width = `${widthPct}%`;
-    }, 8000);
-
-    // Build FormData and send POST to /compare
+  async function runAnalysis() {
     const formData = new FormData();
     formData.append('doc_a', file1);
     formData.append('doc_b', file2);
 
-    fetch('/compare', {
-      method: 'POST',
-      body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-      clearInterval(progressTimer);
+    liveContradictions = [];
+    liveAgreements = [];
+    liveBlindSpotsA = [];
+    liveBlindSpotsB = [];
+    document.getElementById('live-contradictions').textContent = '0';
+    document.getElementById('live-agreements').textContent = '0';
+    document.getElementById('live-blind_spots').textContent = '0';
 
-      if (data.error) {
-        showErrorBanner(data.error);
-        progressBox.classList.remove('visible');
-        currentState = 2;
-        document.getElementById('stat-status').textContent = 'READY';
-        btnRun.disabled = false;
-      } else {
-        fillEl.style.width = '100%';
-        stepText.textContent = 'Compiling results...';
+    currentState = 3;
+    document.getElementById('stat-status').textContent = 'ANALYSING';
+    btnRun.disabled = true;
+    
+    // Show progress UI
+    showProgressUI();
 
-        // Increment analyses count
+    try {
+      const response = await fetch('/analyze-stream', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        let errData = {};
+        try { errData = await response.json(); } catch(e) {}
+        showError(errData.error || errData.message || `Server error (${response.status})`);
+        resetToIdle();
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+
+        let currentEvent = null;
+        for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            currentEvent = line.slice(7).trim();
+          } else if (line.startsWith('data: ') && currentEvent) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              handleStreamEvent(currentEvent, data);
+            } catch(e) {}
+            currentEvent = null;
+          }
+        }
+      }
+    } catch (err) {
+      showError('Connection lost during analysis. Please try again.');
+      resetToIdle();
+    }
+  }
+
+  function handleStreamEvent(event, data) {
+    switch(event) {
+      case 'progress':
+        updateProgressBar(data.percent);
+        updateProgressLabel(data.message);
+        updateStepIndicator(data.step, data.total);
+        break;
+
+      case 'contradiction':
+        liveContradictions.push(data.data);
+        updateLiveCounter('contradictions', liveContradictions.length);
+        flashCounter('contradictions', '#CC2200');
+        break;
+
+      case 'agreement':
+        liveAgreements.push(data.data);
+        updateLiveCounter('agreements', liveAgreements.length);
+        flashCounter('agreements', '#1A6B00');
+        break;
+
+      case 'blind_spot_a':
+        liveBlindSpotsA.push(data.text);
+        updateLiveCounter('blind_spots', 
+          liveBlindSpotsA.length + liveBlindSpotsB.length);
+        break;
+
+      case 'blind_spot_b':
+        liveBlindSpotsB.push(data.text);
+        updateLiveCounter('blind_spots', 
+          liveBlindSpotsA.length + liveBlindSpotsB.length);
+        break;
+
+      case 'complete':
+        completeAnimation(data);
         analysesRunCount++;
         sessionStorage.setItem('dae_analyses_run', analysesRunCount.toString());
         document.getElementById('stat-runs').textContent = analysesRunCount;
         document.getElementById('stat-status').textContent = 'DONE';
-
-        currentState = 4; // STATE 4 Results preview
-
-        // 1.5s Auto-redirect to /results
+        currentState = 4;
         setTimeout(() => {
-          window.location.href = data.redirect_url || `/results?id=${data.id}`;
-        }, 1500);
-      }
-    })
-    .catch(err => {
-      clearInterval(progressTimer);
-      showErrorBanner("Error processing documents: " + err.message);
-      progressBox.classList.remove('visible');
-      currentState = 2;
-      document.getElementById('stat-status').textContent = 'READY';
-      btnRun.disabled = false;
-    });
+          window.location.href = data.redirect_url;
+        }, 1800);
+        break;
+
+      case 'error':
+        showError(data.message);
+        resetToIdle();
+        break;
+    }
+  }
+
+  function showProgressUI() {
+    const overlay = document.getElementById('stream-overlay');
+    if (overlay) overlay.classList.add('active');
+  }
+
+  function updateLiveCounter(type, value) {
+    const el = document.getElementById(`live-${type}`);
+    if (el) {
+      el.textContent = value;
+      el.classList.add('flash');
+      setTimeout(() => el.classList.remove('flash'), 300);
+    }
+  }
+
+  function flashCounter(type, color) {
+    const el = document.getElementById(`live-${type}`);
+    if (el) {
+      el.style.color = color;
+      el.style.transform = 'scale(1.3)';
+      setTimeout(() => {
+        el.style.transform = 'scale(1)';
+      }, 200);
+    }
+  }
+
+  function updateProgressBar(percent) {
+    const bar = document.getElementById('stream-progress-fill');
+    if (bar) bar.style.width = percent + '%';
+  }
+
+  function updateProgressLabel(message) {
+    const label = document.getElementById('stream-progress-label');
+    if (label) label.textContent = message;
+  }
+
+  function updateStepIndicator(step, total) {
+    const el = document.getElementById('stream-step');
+    if (el) el.textContent = `STEP ${step} / ${total}`;
+  }
+
+  function completeAnimation(data) {
+    const label = document.getElementById('stream-progress-label');
+    if (label) label.textContent = 'Analysis complete. Loading results...';
+    updateProgressBar(100);
+  }
+
+  function resetToIdle() {
+    liveContradictions = [];
+    liveAgreements = [];
+    liveBlindSpotsA = [];
+    liveBlindSpotsB = [];
+    const overlay = document.getElementById('stream-overlay');
+    if (overlay) overlay.classList.remove('active');
+    currentState = file1 && file2 ? 2 : 1;
+    document.getElementById('stat-status').textContent = file1 && file2 ? 'READY' : 'IDLE';
+    btnRun.disabled = !(file1 && file2);
+  }
+
+  function showError(msg) {
+    showErrorBanner(msg);
   }
 
   function showErrorBanner(msg) {
