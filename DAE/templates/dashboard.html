@@ -486,6 +486,32 @@
     color: #6B6760;
     letter-spacing: 1px;
   }
+
+  /* MODE TOGGLE */
+  .mode-toggle-bar {
+    padding: 12px 16px;
+    border-bottom: 1px solid #D4CFC4;
+    display: flex;
+    gap: 8px;
+    background: #EDEAE0;
+  }
+  .mode-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    padding: 6px 12px;
+    border: 1px solid #D4CFC4;
+    background: transparent;
+    color: #6B6760;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background-color 0.15s, color 0.15s;
+    border-radius: 0 !important;
+  }
+  .mode-btn.active {
+    background: #0A0A0A;
+    color: #F5F0E8;
+    border-color: #0A0A0A;
+  }
 </style>
 {% endblock %}
 
@@ -502,38 +528,70 @@
     <!-- TOP LABEL -->
     <div class="sidebar-top-label">
       <div class="top-title">ANALYSER</div>
-      <div class="top-subtitle">Upload two PDFs to compare</div>
+      <div class="top-subtitle">Upload 2 to 5 PDFs to compare</div>
+    </div>
+
+    <!-- MODE TOGGLE -->
+    <div class="mode-toggle-bar">
+      <button class="mode-btn active" id="mode-standard" onclick="setMode('standard')">[2 DOCUMENTS]</button>
+      <button class="mode-btn" id="mode-multi" onclick="setMode('multi')">[MULTI 3-5]</button>
     </div>
 
     <!-- SECTION 01 — LOAD DOCUMENTS -->
     <span class="section-label">01 / DOCUMENTS</span>
     
-    <div class="upload-zone" id="zone-1" data-slot="1">
-      <button class="remove-file-btn" data-slot="1">✕</button>
-      <div class="empty-state-view" id="empty-view-1" style="display:flex; flex-direction:column; align-items:center;">
-        <div class="css-doc-icon"></div>
-        <div class="upload-title-empty">DOCUMENT 01</div>
-        <div class="upload-sub-empty">DROP PDF OR CLICK</div>
+    <!-- STANDARD 2-DOC ZONES -->
+    <div id="zones-standard">
+      <div class="upload-zone" id="zone-1" data-slot="1">
+        <button class="remove-file-btn" data-slot="1">✕</button>
+        <div class="empty-state-view" id="empty-view-1" style="display:flex; flex-direction:column; align-items:center;">
+          <div class="css-doc-icon"></div>
+          <div class="upload-title-empty">DOCUMENT 01</div>
+          <div class="upload-sub-empty">DROP PDF OR CLICK</div>
+        </div>
+        <div class="loaded-state-view" id="loaded-view-1" style="display:none; flex-direction:column; align-items:center;">
+          <div class="upload-filename-loaded" id="filename-1">doc1.pdf</div>
+          <div class="upload-size-loaded" id="filesize-1">145 KB</div>
+        </div>
+        <input type="file" id="file-1" name="doc_a" accept=".pdf" style="display:none">
       </div>
-      <div class="loaded-state-view" id="loaded-view-1" style="display:none; flex-direction:column; align-items:center;">
-        <div class="upload-filename-loaded" id="filename-1">doc1.pdf</div>
-        <div class="upload-size-loaded" id="filesize-1">145 KB</div>
+
+      <div class="upload-zone" id="zone-2" data-slot="2">
+        <button class="remove-file-btn" data-slot="2">✕</button>
+        <div class="empty-state-view" id="empty-view-2" style="display:flex; flex-direction:column; align-items:center;">
+          <div class="css-doc-icon"></div>
+          <div class="upload-title-empty">DOCUMENT 02</div>
+          <div class="upload-sub-empty">DROP PDF OR CLICK</div>
+        </div>
+        <div class="loaded-state-view" id="loaded-view-2" style="display:none; flex-direction:column; align-items:center;">
+          <div class="upload-filename-loaded" id="filename-2">doc2.pdf</div>
+          <div class="upload-size-loaded" id="filesize-2">189 KB</div>
+        </div>
+        <input type="file" id="file-2" name="doc_b" accept=".pdf" style="display:none">
       </div>
-      <input type="file" id="file-1" name="doc_a" accept=".pdf" style="display:none">
     </div>
 
-    <div class="upload-zone" id="zone-2" data-slot="2">
-      <button class="remove-file-btn" data-slot="2">✕</button>
-      <div class="empty-state-view" id="empty-view-2" style="display:flex; flex-direction:column; align-items:center;">
-        <div class="css-doc-icon"></div>
-        <div class="upload-title-empty">DOCUMENT 02</div>
-        <div class="upload-sub-empty">DROP PDF OR CLICK</div>
+    <!-- MULTI 3-5 DOC ZONES -->
+    <div id="zones-multi" style="display:none;">
+      {% for slot in range(1, 6) %}
+      <div class="upload-zone" id="multi-zone-{{ slot }}" data-slot="{{ slot }}" style="height: 64px; margin-bottom: 8px;">
+        <button class="remove-file-btn multi-remove-btn" data-slot="{{ slot }}">✕</button>
+        <div class="empty-state-view" id="multi-empty-view-{{ slot }}" style="display:flex; flex-direction:column; align-items:center;">
+          <div class="css-doc-icon" style="height:14px; width:12px;"></div>
+          <div class="upload-title-empty" style="font-size:8px; margin-top:2px;">DOCUMENT 0{{ slot }}</div>
+          {% if slot > 2 %}
+            <div class="upload-sub-empty" style="font-size:7px; color:#AAAAAA;">OPTIONAL</div>
+          {% else %}
+            <div class="upload-sub-empty" style="font-size:7px;">DROP PDF OR CLICK</div>
+          {% endif %}
+        </div>
+        <div class="loaded-state-view" id="multi-loaded-view-{{ slot }}" style="display:none; flex-direction:column; align-items:center;">
+          <div class="upload-filename-loaded" id="multi-filename-{{ slot }}">doc{{ slot }}.pdf</div>
+          <div class="upload-size-loaded" id="multi-filesize-{{ slot }}">145 KB</div>
+        </div>
+        <input type="file" id="multi-file-{{ slot }}" name="doc_{{ slot }}" accept=".pdf" style="display:none">
       </div>
-      <div class="loaded-state-view" id="loaded-view-2" style="display:none; flex-direction:column; align-items:center;">
-        <div class="upload-filename-loaded" id="filename-2">doc2.pdf</div>
-        <div class="upload-size-loaded" id="filesize-2">189 KB</div>
-      </div>
-      <input type="file" id="file-2" name="doc_b" accept=".pdf" style="display:none">
+      {% endfor %}
     </div>
 
     <div class="divider"></div>
@@ -665,6 +723,197 @@
   let currentState = 1;
   let file1 = null;
   let file2 = null;
+
+  let multiMode = false;
+  let multiFiles = {1: null, 2: null, 3: null, 4: null, 5: null};
+
+  function setMode(mode) {
+    multiMode = mode === 'multi';
+    document.getElementById('zones-standard').style.display = multiMode ? 'none' : 'block';
+    document.getElementById('zones-multi').style.display = multiMode ? 'block' : 'none';
+    document.getElementById('mode-standard').classList.toggle('active', !multiMode);
+    document.getElementById('mode-multi').classList.toggle('active', multiMode);
+    updateDocsLoadedStat();
+    checkReadyState();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    for (let slot = 1; slot <= 5; slot++) {
+      const zone = document.getElementById(`multi-zone-${slot}`);
+      const fileInput = document.getElementById(`multi-file-${slot}`);
+      if (!zone || !fileInput) continue;
+
+      zone.addEventListener('click', (e) => {
+        if (e.target.classList.contains('remove-file-btn')) return;
+        fileInput.click();
+      });
+
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) setMultiSlotFile(slot, e.target.files[0]);
+      });
+
+      zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zone.classList.add('dragover');
+      });
+      zone.addEventListener('dragleave', () => {
+        zone.classList.remove('dragover');
+      });
+      zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+          setMultiSlotFile(slot, e.dataTransfer.files[0]);
+        }
+      });
+    }
+
+    document.querySelectorAll('.multi-remove-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const slot = parseInt(btn.getAttribute('data-slot'));
+        clearMultiSlot(slot);
+      });
+    });
+  });
+
+  function setMultiSlotFile(slotNum, file) {
+    multiFiles[slotNum] = file;
+    const zone = document.getElementById(`multi-zone-${slotNum}`);
+    const emptyView = document.getElementById(`multi-empty-view-${slotNum}`);
+    const loadedView = document.getElementById(`multi-loaded-view-${slotNum}`);
+    const nameEl = document.getElementById(`multi-filename-${slotNum}`);
+    const sizeEl = document.getElementById(`multi-filesize-${slotNum}`);
+
+    if (zone) zone.classList.add('loaded');
+    if (emptyView) emptyView.style.display = 'none';
+    if (loadedView) loadedView.style.display = 'flex';
+    if (nameEl) nameEl.textContent = file.name;
+    if (sizeEl) sizeEl.textContent = formatSize(file.size);
+
+    updateDocsLoadedStat();
+    checkReadyState();
+  }
+
+  function clearMultiSlot(slotNum) {
+    multiFiles[slotNum] = null;
+    const input = document.getElementById(`multi-file-${slotNum}`);
+    if (input) input.value = '';
+
+    const zone = document.getElementById(`multi-zone-${slotNum}`);
+    const emptyView = document.getElementById(`multi-empty-view-${slotNum}`);
+    const loadedView = document.getElementById(`multi-loaded-view-${slotNum}`);
+
+    if (zone) zone.classList.remove('loaded');
+    if (emptyView) emptyView.style.display = 'flex';
+    if (loadedView) loadedView.style.display = 'none';
+
+    updateDocsLoadedStat();
+    checkReadyState();
+  }
+
+  function updateDocsLoadedStat() {
+    let count = 0;
+    if (multiMode) {
+      count = Object.values(multiFiles).filter(f => f !== null).length;
+    } else {
+      count = (file1 ? 1 : 0) + (file2 ? 1 : 0);
+    }
+    document.getElementById('stat-docs').textContent = count;
+  }
+
+  function checkReadyState() {
+    if (multiMode) {
+      const loadedCount = Object.values(multiFiles).filter(f => f !== null).length;
+      if (loadedCount >= 2) {
+        btnRun.disabled = false;
+        btnRun.classList.add('enabled');
+        hintText.textContent = `COMPARING ${loadedCount} DOCUMENTS (30–90 SEC)`;
+        if (currentState === 1) {
+          currentState = 2;
+          document.getElementById('stat-status').textContent = 'READY';
+        }
+      } else {
+        btnRun.disabled = true;
+        btnRun.classList.remove('enabled');
+        hintText.textContent = 'SELECT AT LEAST 2 DOCUMENTS';
+      }
+    } else {
+      if (file1 && file2) {
+        btnRun.disabled = false;
+        btnRun.classList.add('enabled');
+        hintText.textContent = 'ESTIMATED TIME: 30–90 SEC';
+        if (currentState === 1) {
+          currentState = 2;
+          document.getElementById('stat-status').textContent = 'READY';
+        }
+      } else {
+        btnRun.disabled = true;
+        btnRun.classList.remove('enabled');
+        hintText.textContent = 'SELECT BOTH DOCUMENTS';
+      }
+    }
+  }
+
+  function handleRunAnalysis() {
+    if (multiMode) {
+      const loadedFiles = Object.values(multiFiles).filter(f => f !== null);
+      if (loadedFiles.length < 2) return;
+      runMultiAnalysis();
+    } else {
+      if (!file1 || !file2) return;
+      runAnalysis();
+    }
+  }
+
+  async function runMultiAnalysis() {
+    const formData = new FormData();
+    let fileIdx = 1;
+    for (let slot = 1; slot <= 5; slot++) {
+      if (multiFiles[slot]) {
+        formData.append(`doc_${fileIdx}`, multiFiles[slot]);
+        fileIdx++;
+      }
+    }
+
+    currentState = 3;
+    document.getElementById('stat-status').textContent = 'ANALYSING';
+    btnRun.disabled = true;
+
+    showProgressUI();
+    updateProgressLabel('Analyzing multiple documents...');
+    updateProgressBar(20);
+
+    try {
+      const response = await fetch('/analyze-multi', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+      if (!response.ok || data.error) {
+        showError(data.error || 'Multi-document analysis failed.');
+        resetToIdle();
+        return;
+      }
+
+      updateProgressBar(100);
+      updateProgressLabel('Analysis complete. Loading results...');
+      analysesRunCount++;
+      sessionStorage.setItem('dae_analyses_run', analysesRunCount.toString());
+      document.getElementById('stat-runs').textContent = analysesRunCount;
+      document.getElementById('stat-status').textContent = 'DONE';
+      currentState = 4;
+
+      setTimeout(() => {
+        window.location.href = data.redirect_url;
+      }, 1500);
+
+    } catch (err) {
+      showError('Connection lost during multi-document analysis.');
+      resetToIdle();
+    }
+  }
 
   // Session storage analyses count
   let analysesRunCount = parseInt(sessionStorage.getItem('dae_analyses_run') || '0');

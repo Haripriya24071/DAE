@@ -794,21 +794,28 @@
   <div class="top-strip">
     <div class="top-left-pair">
       <span class="results-tag">RESULTS</span>
-      <span class="file-pill">
-        {% if result %}
-          {{ doc_info.a or result.doc_a.name if result.doc_a else 'DOCUMENT_01.pdf' }}
-        {% else %}
-          contract_v1.pdf
-        {% endif %}
-      </span>
-      <span class="vs-span">VS</span>
-      <span class="file-pill">
-        {% if result %}
-          {{ doc_info.b or result.doc_b.name if result.doc_b else 'DOCUMENT_02.pdf' }}
-        {% else %}
-          contract_v2.pdf
-        {% endif %}
-      </span>
+      {% if result and result.mode == 'multi' and result.documents %}
+        {% for doc in result.documents %}
+          <span class="file-pill">{{ doc }}</span>
+          {% if not loop.last %}<span class="vs-span">|</span>{% endif %}
+        {% endfor %}
+      {% else %}
+        <span class="file-pill">
+          {% if result %}
+            {{ doc_info.a or result.doc_a.name if result.doc_a else 'DOCUMENT_01.pdf' }}
+          {% else %}
+            contract_v1.pdf
+          {% endif %}
+        </span>
+        <span class="vs-span">VS</span>
+        <span class="file-pill">
+          {% if result %}
+            {{ doc_info.b or result.doc_b.name if result.doc_b else 'DOCUMENT_02.pdf' }}
+          {% else %}
+            contract_v2.pdf
+          {% endif %}
+        </span>
+      {% endif %}
     </div>
 
     <div class="top-actions-right">
@@ -818,13 +825,19 @@
     </div>
   </div>
 
-  <!-- STATS ROW (4 CARDS) -->
+  <!-- STATS ROW CARDS -->
   {% set c_count = (result.contradictions|length) if (result and result.contradictions) else (3 if not result else 0) %}
   {% set a_count = (result.agreements|length) if (result and result.agreements) else (7 if not result else 0) %}
-  {% set b_count = ((result.blind_spots_a|length + result.blind_spots_b|length)) if (result and result.blind_spots_a) else (2 if not result else 0) %}
-  {% set total_chunks = (result.total_chunks_a + result.total_chunks_b) if (result and result.total_chunks_a) else (99 if not result else 0) %}
+  {% set b_count = (result.blind_spots|length if (result and result.blind_spots is mapping) else ((result.blind_spots_a|length + result.blind_spots_b|length) if (result and result.blind_spots_a) else (2 if not result else 0))) %}
+  {% set total_chunks = (result.total_chunks if (result and result.total_chunks is defined) else ((result.total_chunks_a + result.total_chunks_b) if (result and result.total_chunks_a) else (99 if not result else 0))) %}
 
-  <div class="stats-row-grid">
+  <div class="stats-row-grid" style="grid-template-columns: repeat({% if result and result.mode == 'multi' %}5{% else %}4{% endif %}, 1fr);">
+    {% if result and result.mode == 'multi' %}
+      <div class="res-stat-card">
+        <span class="res-stat-val" style="color:#0A0A0A;">{{ result.doc_count }}</span>
+        <span class="res-stat-lbl">DOCUMENTS</span>
+      </div>
+    {% endif %}
     <div class="res-stat-card">
       <span class="res-stat-val" style="color:#CC2200;">{{ c_count }}</span>
       <span class="res-stat-lbl">CONTRADICTIONS</span>
@@ -902,6 +915,12 @@
                  data-score="{{ item.score if item.score is defined else 0.25 }}" 
                  data-card-index="c-{{ loop.index }}">
               
+              {% if item.pair_label or item.doc_i %}
+                <div style="font-family: 'Space Mono', monospace; font-size: 8px; color: #AAAAAA; letter-spacing: 2px; text-transform: uppercase; padding: 8px 16px 0 16px;">
+                  {{ item.pair_label or (item.doc_i ~ ' VS ' ~ item.doc_j) }}
+                </div>
+              {% endif %}
+
               <!-- INTENSITY BAR -->
               <div class="card-sim-bar-wrapper">
                 <div class="card-sim-bar-fill"></div>
@@ -910,11 +929,11 @@
 
               <div class="card-top-cols">
                 <div class="card-col-half">
-                  <span class="col-lbl">DOC A</span>
+                  <span class="col-lbl">{{ item.doc_i or 'DOC A' }}</span>
                   <div class="excerpt-text-heatmap col-a-target"></div>
                 </div>
                 <div class="card-col-half">
-                  <span class="col-lbl">DOC B</span>
+                  <span class="col-lbl">{{ item.doc_j or 'DOC B' }}</span>
                   <div class="excerpt-text-heatmap col-b-target"></div>
                 </div>
               </div>
@@ -927,7 +946,7 @@
               </div>
 
               <div class="card-bottom-strip">
-                <span class="verdict-tag-badge disagree">DISAGREE</span>
+                <span class="verdict-tag-badge disagree">{{ item.verdict or 'DISAGREE' }}</span>
                 <span class="verdict-reason-text">{{ item.reason or 'Excerpts contain opposing numerical values or semantic statements.' }}</span>
               </div>
             </div>
@@ -1014,6 +1033,12 @@
                  data-score="{{ item.score if item.score is defined else 0.78 }}" 
                  data-card-index="a-{{ loop.index }}">
               
+              {% if item.pair_label or item.doc_i %}
+                <div style="font-family: 'Space Mono', monospace; font-size: 8px; color: #AAAAAA; letter-spacing: 2px; text-transform: uppercase; padding: 8px 16px 0 16px;">
+                  {{ item.pair_label or (item.doc_i ~ ' VS ' ~ item.doc_j) }}
+                </div>
+              {% endif %}
+
               <div class="card-sim-bar-wrapper">
                 <div class="card-sim-bar-fill"></div>
               </div>
@@ -1021,11 +1046,11 @@
 
               <div class="card-top-cols">
                 <div class="card-col-half">
-                  <span class="col-lbl">DOC A</span>
+                  <span class="col-lbl">{{ item.doc_i or 'DOC A' }}</span>
                   <div class="excerpt-text-heatmap col-a-target"></div>
                 </div>
                 <div class="card-col-half">
-                  <span class="col-lbl">DOC B</span>
+                  <span class="col-lbl">{{ item.doc_j or 'DOC B' }}</span>
                   <div class="excerpt-text-heatmap col-b-target"></div>
                 </div>
               </div>
@@ -1082,29 +1107,48 @@
 
       <!-- TAB CONTENT — BLIND SPOTS -->
       <div class="tab-pane" id="tab-blindspots">
-        <div class="blindspots-2col">
-          <div class="blind-col-box">
-            <div class="blind-col-title">ONLY IN DOC A</div>
-            {% if result and result.blind_spots_a %}
-              {% for snippet in result.blind_spots_a %}
-                <div class="blind-item">{{ snippet }}</div>
-              {% endfor %}
-            {% else %}
-              <div class="blind-item">Section 14.2: Mandatory Arbitration in Delaware Jurisdiction</div>
-              <div class="blind-item">Schedule C: Intellectual Property Assignment Clause</div>
-            {% endif %}
+        {% if result and result.mode == 'multi' and result.blind_spots %}
+          <div style="display: grid; grid-template-columns: repeat({{ result.doc_count }}, 1fr); gap: 16px;">
+            {% for doc_name, snippets in result.blind_spots.items() %}
+              <div class="blind-col-box">
+                <div class="blind-col-title" title="{{ doc_name }}">{{ doc_name[:20] }}</div>
+                {% if snippets %}
+                  {% for snippet in snippets %}
+                    <div class="blind-item">{{ snippet }}</div>
+                  {% endfor %}
+                {% else %}
+                  <div class="blind-item" style="color: #AAAAAA;">No unique topics found.</div>
+                {% endif %}
+              </div>
+            {% endfor %}
           </div>
+        {% else %}
+          <div class="blindspots-2col">
+            <div class="blind-col-box">
+              <div class="blind-col-title">ONLY IN DOC A</div>
+              {% if result and result.blind_spots_a %}
+                {% for snippet in result.blind_spots_a %}
+                  <div class="blind-item">{{ snippet }}</div>
+                {% endfor %}
+              {% else %}
+                <div class="blind-item">Section 14.2: Mandatory Arbitration in Delaware Jurisdiction</div>
+                <div class="blind-item">Schedule C: Intellectual Property Assignment Clause</div>
+              {% endif %}
+            </div>
 
-          <div class="blind-col-box">
-            <div class="blind-col-title">ONLY IN DOC B</div>
-            {% if result and result.blind_spots_b %}
-              {% for snippet in result.blind_spots_b %}
-                <div class="blind-item">{{ snippet }}</div>
-              {% endfor %}
-            {% else %}
-              <div class="blind-item">Appendix B: Remote Work & Equipment Allowance Policy</div>
-            {% endif %}
+            <div class="blind-col-box">
+              <div class="blind-col-title">ONLY IN DOC B</div>
+              {% if result and result.blind_spots_b %}
+                {% for snippet in result.blind_spots_b %}
+                  <div class="blind-item">{{ snippet }}</div>
+                {% endfor %}
+              {% else %}
+                <div class="blind-item">Appendix B: Remote Work & Equipment Allowance Policy</div>
+              {% endif %}
+            </div>
           </div>
+        {% endif %}
+      </div>
       <!-- Q&A PANEL -->
       <div class="qa-panel" id="qa-panel">
         <div class="qa-header">

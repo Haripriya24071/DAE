@@ -653,6 +653,190 @@ REASON: [One sentence explanation]"""
         }
     )
 
+@app.route("/analyze-multi", methods=["POST"])
+def analyze_multi():
+    try:
+        files = []
+        for i in range(1, 6):
+            key = f"doc_{i}"
+            if key in request.files and request.files[key].filename:
+                f = request.files[key]
+                if allowed_file(f.filename):
+                    files.append(f)
+
+        if len(files) < 2:
+            return jsonify({"error": "At least 2 PDF files required"}), 400
+        if len(files) > 5:
+            return jsonify({"error": "Maximum 5 documents"}), 400
+
+        from langchain_community.document_loaders import PyPDFLoader
+        from langchain_text_splitters import RecursiveCharacterTextSplitter
+        from langchain_community.vectorstores import FAISS
+        from langchain_huggingface import HuggingFaceEmbeddings
+        from langchain_groq import ChatGroq
+        from langchain_core.prompts import PromptTemplate
+
+        saved_paths = []
+        names = []
+        for f in files:
+            name = secure_filename(f.filename)
+            path = os.path.join(
+                app.config["UPLOAD_FOLDER"],
+                f"{str(uuid.uuid4())[:6]}_{name}"
+            )
+            f.save(path)
+            saved_paths.append(path)
+            names.append(name)
+
+        emb = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        llm = ChatGroq(
+            model_name="llama-3.1-8b-instant",
+            api_key=os.getenv("GROQ_API_KEY")
+        )
+
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=500, chunk_overlap=50)
+        
+        all_docs = []
+        vectorstores = []
+        
+        for path in saved_paths:
+            loader = PyPDFLoader(path)
+            docs = splitter.split_documents(loader.load())
+            all_docs.append(docs)
+            vs = FAISS.from_documents(docs, emb, distance_strategy="COSINE")
+            vectorstores.append(vs)
+
+        prompt = PromptTemplate(
+            input_variables=["text_a", "text_b"],
+            template="""Compare these two excerpts from different documents.
+Excerpt A: {text_a}
+Excerpt B: {text_b}
+Respond in exactly this format:
+VERDICT: [AGREE / DISAGREE / PARTIALLY AGREE]
+REASON: [One sentence explanation]"""
+        )
+        chain = prompt | llm
+
+        # Compare every pair of documents
+        all_contradictions = []
+        all_agreements = []
+        seen_pairs = set()
+        all_scores = []
+
+        for i in range(len(all_docs)):
+            for j in range(i + 1, len(all_docs)):
+                pair_label = f"{names[i]} vs {names[j]}"
+                
+                for chunk in all_docs[i]:
+                    try:
+                        match = vectorstores[j].similarity_search_with_score(
+                            chunk.page_content, k=1)
+                        if not match:
+                            continue
+                        best_match, score = match[0]
+                        all_scores.append(float(score))
+                        pair_key = (chunk.page_content[:80],
+                                    best_match.page_content[:80])
+                        if pair_key in seen_pairs:
+                            continue
+                        seen_pairs.add(pair_key)
+
+                        if float(score) < 0.5:
+                            response = chain.invoke({
+                                "text_a": chunk.page_content,
+                                "text_b": best_match.page_content
+                            })
+                            verdict_text = getattr(
+                                response, "content", str(response))
+                            verdict = "PARTIALLY AGREE"
+                            reason = verdict_text
+                            if "VERDICT:" in verdict_text:
+                                for line in verdict_text.split("\n"):
+                                    if line.startswith("VERDICT:"):
+                                        verdict = line.replace(
+                                            "VERDICT:", "").strip()
+                                    if line.startswith("REASON:"):
+                                        reason = line.replace(
+                                            "REASON:", "").strip()
+
+                            entry = {
+                                "doc_i": names[i],
+                                "doc_j": names[j],
+                                "pair_label": pair_label,
+                                "chunk_a": chunk.page_content,
+                                "chunk_b": best_match.page_content,
+                                "score": float(round(score, 3)),
+                                "verdict": verdict,
+                                "reason": reason
+                            }
+
+                            if "DISAGREE" in verdict:
+                                all_contradictions.append(entry)
+                            else:
+                                all_agreements.append(entry)
+                    except Exception as e:
+                        logging.error(f"Multi chunk error: {e}")
+                        continue
+
+        # Blind spots per document
+        blind_spots = {}
+        for i, (docs_i, vs_i, name_i) in enumerate(
+                zip(all_docs, vectorstores, names)):
+            blind_spots[name_i] = []
+            for j, vs_j in enumerate(vectorstores):
+                if i == j:
+                    continue
+                for chunk in docs_i:
+                    try:
+                        match = vs_j.similarity_search_with_score(
+                            chunk.page_content, k=1)
+                        if match and float(match[0][1]) > 0.6:
+                            text = chunk.page_content[:200]
+                            if text not in blind_spots[name_i]:
+                                blind_spots[name_i].append(text)
+                    except:
+                        continue
+            blind_spots[name_i] = blind_spots[name_i][:5]
+
+        results = {
+            "mode": "multi",
+            "documents": names,
+            "doc_count": len(names),
+            "contradictions": all_contradictions[:15],
+            "agreements": all_agreements[:15],
+            "blind_spots": blind_spots,
+            "total_chunks": sum(len(d) for d in all_docs),
+            "score_range": {
+                "min": float(round((1 - max(all_scores)) * 100, 1))
+                       if all_scores else 0,
+                "max": float(round((1 - min(all_scores)) * 100, 1))
+                       if all_scores else 0
+            }
+        }
+
+        if not all_contradictions and not all_agreements:
+            results["warning"] = "No comparable passages found."
+
+        doc_names_str = " vs ".join(names)
+        narrative = generate_narrative(names[0], doc_names_str, results)
+        results["narrative"] = narrative
+
+        history_id = save_history_entry(names[0], doc_names_str, results)
+        session["last_result"] = results
+        session["last_id"] = history_id
+
+        return jsonify({
+            "success": True,
+            "id": history_id,
+            "redirect_url": f"/result?id={history_id}",
+            "doc_count": len(names)
+        })
+
+    except Exception as e:
+        logging.error(f"Multi-analyze error: {e}")
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/results")
 @app.route("/result")
 def results():
