@@ -1,0 +1,426 @@
+{% extends "base.html" %}
+
+{% block title %}DAE — Analysis History{% endblock %}
+
+{% block head %}
+<style>
+  .history-page-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    background: var(--bg);
+    padding: 40px 48px;
+  }
+
+  .history-container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* HEADER ROW */
+  .history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 32px;
+  }
+
+  .header-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: #AAAAAA;
+    letter-spacing: 5px;
+    display: block;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .header-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 28px;
+    color: #0A0A0A;
+    font-weight: 500;
+  }
+
+  .header-sub {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    color: #6B6760;
+    margin-top: 6px;
+  }
+
+  .btn-clear-history {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: #CC2200;
+    border: 1px solid #CC2200;
+    background: transparent;
+    padding: 8px 16px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background-color 0.15s, color 0.15s;
+    text-transform: uppercase;
+  }
+  .btn-clear-history:hover {
+    background: #CC2200;
+    color: #FDFCFA;
+  }
+
+  /* FILTER ROW */
+  .filter-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .filter-lbl {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    color: #AAAAAA;
+    letter-spacing: 2px;
+    align-self: center;
+  }
+
+  .filter-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    padding: 5px 12px;
+    border: 1px solid #D4CFC4;
+    background: transparent;
+    color: #6B6760;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .filter-btn.active {
+    background: #0A0A0A;
+    color: #F5F0E8;
+    border-color: #0A0A0A;
+  }
+
+  /* TABLE LAYOUT */
+  .table-box {
+    background: #FDFCFA;
+    border: 1px solid #D4CFC4;
+    box-shadow: 3px 3px 0px #D4CFC4;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  table.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+  }
+
+  table.history-table thead {
+    border-bottom: 2px solid #0A0A0A;
+  }
+
+  table.history-table th {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    color: #AAAAAA;
+    letter-spacing: 3px;
+    padding: 10px 16px;
+    text-transform: uppercase;
+  }
+
+  table.history-table tr.history-data-row {
+    height: 52px;
+    border-bottom: 1px solid #E4E0D5;
+    cursor: pointer;
+    transition: background-color 0.15s, box-shadow 0.15s;
+  }
+  table.history-table tr.history-data-row:hover {
+    background: #EDEAE0;
+    box-shadow: inset 3px 0 0 #0A0A0A;
+  }
+
+  table.history-table td {
+    padding: 0 16px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    color: #0A0A0A;
+    vertical-align: middle;
+  }
+
+  .col-timestamp {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: #6B6760;
+    white-space: nowrap;
+  }
+
+  .col-docname {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    color: #0A0A0A;
+    max-width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .count-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .count-num.red { color: #CC2200; }
+  .count-num.green { color: #1A6B00; }
+  .count-num.amber { color: #996600; }
+  .count-num.muted { color: #AAAAAA; }
+
+  .action-view-link {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: #6B6760;
+    text-decoration: none;
+    letter-spacing: 1px;
+    transition: color 0.15s;
+  }
+  tr.history-data-row:hover .action-view-link {
+    color: #0A0A0A;
+    font-weight: 700;
+  }
+
+  .table-footer-note {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    color: #AAAAAA;
+    letter-spacing: 3px;
+    margin-top: 16px;
+    text-transform: uppercase;
+  }
+
+  /* EMPTY STATE */
+  .empty-history-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 0;
+    text-align: center;
+  }
+
+  .empty-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: #AAAAAA;
+    letter-spacing: 5px;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+  }
+
+  .ghost-table-box {
+    width: 100%;
+    max-width: 700px;
+    background: #FDFCFA;
+    border: 1px solid #D4CFC4;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .ghost-row {
+    height: 16px;
+    background: #EDEAE0;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+  .ghost-row::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: ghostShimmer 1.5s infinite;
+  }
+
+  @keyframes ghostShimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .ghost-sublabel {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    color: #6B6760;
+    margin-bottom: 24px;
+  }
+
+  .btn-cta-start {
+    background: #0A0A0A;
+    color: #F5F0E8;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    padding: 14px 28px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-weight: 700;
+    transition: background-color 0.15s, color 0.15s;
+    display: inline-block;
+  }
+  .btn-cta-start:hover {
+    background: #1A6B00;
+    color: #FDFCFA;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="history-page-wrapper">
+  <div class="history-container">
+
+    <!-- HEADER ROW -->
+    <div class="history-header">
+      <div>
+        <span class="header-tag">HISTORY</span>
+        <h1 class="header-title">Analysis Log</h1>
+        <div class="header-sub">Every comparison you have run — click any row to view full results.</div>
+      </div>
+
+      <form id="clear-form" action="/clear-history" method="POST" style="display:inline;">
+        <button type="button" class="btn-clear-history" onclick="confirmClearHistory()">[CLEAR ALL HISTORY]</button>
+      </form>
+    </div>
+
+    {% set entries = history_entries if history_entries else [] %}
+
+    {% if entries and entries|length > 0 %}
+
+      <!-- FILTER ROW -->
+      <div class="filter-row">
+        <span class="filter-lbl">FILTER:</span>
+        <button class="filter-btn active" data-filter="all" onclick="filterHistory('all', this)">[ALL]</button>
+        <button class="filter-btn" data-filter="high-match" onclick="filterHistory('high-match', this)">[HIGH MATCH (>70%)]</button>
+        <button class="filter-btn" data-filter="contradictions" onclick="filterHistory('contradictions', this)">[CONTRADICTIONS FOUND]</button>
+      </div>
+
+      <!-- TABLE -->
+      <div class="table-box">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>TIMESTAMP</th>
+              <th>DOC A</th>
+              <th>DOC B</th>
+              <th>CONTRADICTIONS</th>
+              <th>AGREEMENTS</th>
+              <th>BLIND SPOTS</th>
+              <th>ACTION</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entry in entries %}
+              {% set res = entry.results if entry.results else {} %}
+              {% set c_cnt = (res.contradictions|length) if res.contradictions else (res.summary_stats.modified_count if res.summary_stats else 0) %}
+              {% set a_cnt = (res.agreements|length) if res.agreements else (res.summary_stats.unchanged_count if res.summary_stats else 0) %}
+              {% set b_cnt = ((res.blind_spots_a|length + res.blind_spots_b|length)) if res.blind_spots_a else 0 %}
+              {% set sim = entry.overall_similarity if entry.overall_similarity is defined else 50 %}
+
+              <tr class="history-data-row" 
+                  data-contradictions="{{ c_cnt }}" 
+                  data-agreements="{{ a_cnt }}" 
+                  data-similarity="{{ sim }}"
+                  onclick="window.location.href='/results?id={{ entry.id }}'">
+                <td class="col-timestamp">{{ entry.timestamp }}</td>
+                <td class="col-docname" title="{{ entry.doc_a }}">{{ entry.doc_a }}</td>
+                <td class="col-docname" title="{{ entry.doc_b }}">{{ entry.doc_b }}</td>
+                <td>
+                  <span class="count-num {% if c_cnt > 0 %}red{% else %}muted{% endif %}">
+                    {{ c_cnt }}
+                  </span>
+                </td>
+                <td>
+                  <span class="count-num {% if a_cnt > 0 %}green{% else %}muted{% endif %}">
+                    {{ a_cnt }}
+                  </span>
+                </td>
+                <td>
+                  <span class="count-num {% if b_cnt > 0 %}amber{% else %}muted{% endif %}">
+                    {{ b_cnt }}
+                  </span>
+                </td>
+                <td>
+                  <a href="/results?id={{ entry.id }}" class="action-view-link" onclick="event.stopPropagation();">[VIEW →]</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-footer-note">
+        SHOWING {{ entries|length }} ENTRIES
+        {% if entries|length > 20 %}
+          — SHOWING MOST RECENT 50 ANALYSES
+        {% endif %}
+      </div>
+
+    {% else %}
+
+      <!-- EMPTY STATE -->
+      <div class="empty-history-wrapper">
+        <div class="empty-tag">NO HISTORY YET</div>
+
+        <div class="ghost-sublabel">Your analyses will appear here</div>
+
+        <div class="ghost-table-box">
+          <div class="ghost-row" style="width: 100%;"></div>
+          <div class="ghost-row" style="width: 85%;"></div>
+          <div class="ghost-row" style="width: 92%;"></div>
+        </div>
+
+        <a href="/dashboard" class="btn-cta-start">START YOUR FIRST ANALYSIS →</a>
+      </div>
+
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function confirmClearHistory() {
+    if (confirm("Delete all history? This cannot be undone.")) {
+      document.getElementById('clear-form').submit();
+    }
+  }
+
+  function filterHistory(filterType, btnEl) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btnEl.classList.add('active');
+
+    const rows = document.querySelectorAll('.history-data-row');
+    rows.forEach(row => {
+      const cCnt = parseInt(row.getAttribute('data-contradictions') || '0');
+      const aCnt = parseInt(row.getAttribute('data-agreements') || '0');
+      const sim = parseFloat(row.getAttribute('data-similarity') || '0');
+
+      if (filterType === 'all') {
+        row.style.display = '';
+      } else if (filterType === 'high-match') {
+        if (sim >= 70 || aCnt > cCnt) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      } else if (filterType === 'contradictions') {
+        if (cCnt > 0) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      }
+    });
+  }
+</script>
+{% endblock %}

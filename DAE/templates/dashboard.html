@@ -1,0 +1,917 @@
+{% extends "base.html" %}
+
+{% block title %}DAE — Analyse Documents{% endblock %}
+
+{% block head %}
+<style>
+  .dashboard-wrapper {
+    height: calc(100vh - 48px - 36px);
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg);
+  }
+
+  /* LEFT SIDEBAR (300px) */
+  aside.left-sidebar {
+    width: 300px;
+    min-width: 300px;
+    background: #EDEAE0;
+    border-right: 1px solid #D4CFC4;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+
+  .sidebar-top-label {
+    padding: 20px 20px 12px;
+    border-bottom: 1px solid #D4CFC4;
+  }
+  .top-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    color: #6B6760;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .top-subtitle {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px;
+    color: #6B6760;
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    color: #AAAAAA;
+    letter-spacing: 3px;
+    padding: 12px 20px 8px;
+    display: block;
+    text-transform: uppercase;
+  }
+
+  .divider {
+    height: 1px;
+    background: #D4CFC4;
+    width: 100%;
+  }
+
+  /* UPLOAD SLOTS */
+  .upload-zone {
+    height: 80px;
+    margin: 0 16px 10px;
+    background: #F5F0E8;
+    border: 1px dashed #C4BFB4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+    padding: 6px;
+    transition: border-color 0.15s, background-color 0.15s;
+  }
+  .upload-zone.dragover {
+    border: 1px solid #1A6B00;
+    background: #F0F7EC;
+  }
+  .upload-zone.loaded {
+    border: 1px solid #1A6B00;
+    background: #F0F7EC;
+  }
+
+  /* CSS Document Icon */
+  .css-doc-icon {
+    width: 16px;
+    height: 20px;
+    border: 1px solid #AAAAAA;
+    position: relative;
+    background: transparent;
+  }
+  .css-doc-icon::before {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 3px;
+    right: 3px;
+    height: 1px;
+    background: #AAAAAA;
+    box-shadow: 0 4px 0 #AAAAAA, 0 8px 0 #AAAAAA;
+  }
+
+  .upload-title-empty {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: #AAAAAA;
+    margin-top: 6px;
+  }
+  .upload-sub-empty {
+    font-family: 'Space Mono', monospace;
+    font-size: 7px;
+    color: #C4BFB4;
+  }
+
+  .upload-filename-loaded {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: #1A6B00;
+    font-weight: 700;
+    max-width: 220px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+  }
+  .upload-size-loaded {
+    font-family: 'Space Mono', monospace;
+    font-size: 7px;
+    color: #6B6760;
+  }
+
+  .remove-file-btn {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    background: none;
+    border: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: #CC2200;
+    cursor: pointer;
+    display: none;
+    line-height: 1;
+  }
+  .upload-zone.loaded .remove-file-btn {
+    display: block;
+  }
+
+  /* PARAMETERS */
+  .toggle-row {
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #E4E0D5;
+    user-select: none;
+  }
+
+  .toggle-labels-box {
+    display: flex;
+    flex-direction: column;
+  }
+  .toggle-main-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px;
+    color: #0A0A0A;
+  }
+  .toggle-sub-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 10px;
+    color: #6B6760;
+  }
+
+  .square-switch {
+    width: 32px;
+    height: 16px;
+    border: 1px solid #C4BFB4;
+    background: #E4E0D5;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+  }
+  .switch-square-thumb {
+    width: 12px;
+    height: 12px;
+    background: #AAAAAA;
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    transition: left 0.15s linear, background-color 0.15s;
+  }
+
+  .toggle-row[data-on="true"] .square-switch {
+    border-color: #1A6B00;
+    background: #F0F7EC;
+  }
+  .toggle-row[data-on="true"] .switch-square-thumb {
+    background: #1A6B00;
+    left: 17px;
+  }
+
+  .sensitivity-row {
+    padding: 10px 20px 16px;
+  }
+  .sens-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .sens-lbl {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    color: #6B6760;
+  }
+  .sens-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: #1A6B00;
+  }
+
+  input[type=range].custom-range {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 1px;
+    background: #C4BFB4;
+    outline: none;
+    margin: 6px 0;
+  }
+  input[type=range].custom-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    background: #0A0A0A;
+    border-radius: 0;
+    cursor: pointer;
+    border: none;
+  }
+  input[type=range].custom-range::-moz-range-thumb {
+    width: 10px;
+    height: 10px;
+    background: #0A0A0A;
+    border-radius: 0;
+    cursor: pointer;
+    border: none;
+  }
+
+  /* RUN ANALYSIS SECTION */
+  .run-section {
+    padding: 16px;
+  }
+
+  .btn-analyse-main {
+    width: 100%;
+    height: 52px;
+    background: #E4E0D5;
+    color: #AAAAAA;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    border: none;
+    cursor: not-allowed;
+    text-transform: uppercase;
+    font-weight: 700;
+    transition: background-color 0.15s, color 0.15s;
+  }
+  .btn-analyse-main.enabled {
+    background: #0A0A0A;
+    color: #F5F0E8;
+    cursor: pointer;
+  }
+  .btn-analyse-main.enabled:hover {
+    background: #1A6B00;
+  }
+
+  .run-hint {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    color: #AAAAAA;
+    text-align: center;
+    margin-top: 8px;
+    letter-spacing: 1px;
+  }
+  .btn-analyse-main.enabled + .run-hint {
+    color: #6B6760;
+  }
+
+  /* PROGRESS BAR IN SIDEBAR */
+  .progress-box {
+    display: none;
+    margin-top: 12px;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .progress-box.visible {
+    display: flex;
+  }
+  .progress-step-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: #6B6760;
+  }
+  .progress-track {
+    width: 100%;
+    height: 1px;
+    background: #E4E0D5;
+    position: relative;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: #0A0A0A;
+    transition: width 0.4s ease;
+  }
+
+  /* QUICK STATS STRIP */
+  .stats-section {
+    padding: 16px 20px;
+    margin-top: auto;
+  }
+  .stats-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .stat-col {
+    display: flex;
+    flex-direction: column;
+  }
+  .stat-num-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 18px;
+    color: #0A0A0A;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .stat-num-lbl {
+    font-family: 'Space Mono', monospace;
+    font-size: 7px;
+    color: #AAAAAA;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* RIGHT MAIN CANVAS AREA */
+  .right-main-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #F5F0E8;
+  }
+
+  #main-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .overlay-buttons {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    z-index: 20;
+    display: flex;
+    gap: 8px;
+  }
+
+  .overlay-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    padding: 6px 14px;
+    border: 1px solid #C4BFB4;
+    background: transparent;
+    color: #6B6760;
+    cursor: pointer;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .overlay-btn:hover {
+    border-color: #0A0A0A;
+    color: #0A0A0A;
+  }
+
+  /* ERROR STRIP AT TOP OF PAGE */
+  .error-banner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(204, 34, 0, 0.15);
+    color: #CC2200;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 10px 24px;
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #CC2200;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+  <!-- ERROR BANNER OVERLAY -->
+  <div class="error-banner" id="error-banner">
+    <span id="error-banner-text">Error processing documents</span>
+    <span style="cursor:pointer;" onclick="hideErrorBanner()">✕</span>
+  </div>
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="left-sidebar">
+    <!-- TOP LABEL -->
+    <div class="sidebar-top-label">
+      <div class="top-title">ANALYSER</div>
+      <div class="top-subtitle">Upload two PDFs to compare</div>
+    </div>
+
+    <!-- SECTION 01 — LOAD DOCUMENTS -->
+    <span class="section-label">01 / DOCUMENTS</span>
+    
+    <div class="upload-zone" id="zone-1" data-slot="1">
+      <button class="remove-file-btn" data-slot="1">✕</button>
+      <div class="empty-state-view" id="empty-view-1" style="display:flex; flex-direction:column; align-items:center;">
+        <div class="css-doc-icon"></div>
+        <div class="upload-title-empty">DOCUMENT 01</div>
+        <div class="upload-sub-empty">DROP PDF OR CLICK</div>
+      </div>
+      <div class="loaded-state-view" id="loaded-view-1" style="display:none; flex-direction:column; align-items:center;">
+        <div class="upload-filename-loaded" id="filename-1">doc1.pdf</div>
+        <div class="upload-size-loaded" id="filesize-1">145 KB</div>
+      </div>
+      <input type="file" id="file-1" name="doc_a" accept=".pdf" style="display:none">
+    </div>
+
+    <div class="upload-zone" id="zone-2" data-slot="2">
+      <button class="remove-file-btn" data-slot="2">✕</button>
+      <div class="empty-state-view" id="empty-view-2" style="display:flex; flex-direction:column; align-items:center;">
+        <div class="css-doc-icon"></div>
+        <div class="upload-title-empty">DOCUMENT 02</div>
+        <div class="upload-sub-empty">DROP PDF OR CLICK</div>
+      </div>
+      <div class="loaded-state-view" id="loaded-view-2" style="display:none; flex-direction:column; align-items:center;">
+        <div class="upload-filename-loaded" id="filename-2">doc2.pdf</div>
+        <div class="upload-size-loaded" id="filesize-2">189 KB</div>
+      </div>
+      <input type="file" id="file-2" name="doc_b" accept=".pdf" style="display:none">
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- SECTION 02 — ANALYSIS PARAMS -->
+    <span class="section-label">02 / PARAMETERS</span>
+
+    <div class="toggle-row" data-on="true" onclick="toggleSwitch(this)">
+      <div class="toggle-labels-box">
+        <span class="toggle-main-label">DEEP SCAN</span>
+        <span class="toggle-sub-label">More thorough, slower</span>
+      </div>
+      <div class="square-switch"><div class="switch-square-thumb"></div></div>
+    </div>
+
+    <div class="toggle-row" data-on="false" onclick="toggleSwitch(this)">
+      <div class="toggle-labels-box">
+        <span class="toggle-main-label">EXTRACT METADATA</span>
+        <span class="toggle-sub-label">Dates, authors, titles</span>
+      </div>
+      <div class="square-switch"><div class="switch-square-thumb"></div></div>
+    </div>
+
+    <div class="toggle-row" data-on="true" onclick="toggleSwitch(this)">
+      <div class="toggle-labels-box">
+        <span class="toggle-main-label">SENTENCE DIFF</span>
+        <span class="toggle-sub-label">Line-by-line comparison</span>
+      </div>
+      <div class="square-switch"><div class="switch-square-thumb"></div></div>
+    </div>
+
+    <div class="toggle-row" data-on="false" onclick="toggleSwitch(this)">
+      <div class="toggle-labels-box">
+        <span class="toggle-main-label">KEYWORD MAP</span>
+        <span class="toggle-sub-label">Topic frequency analysis</span>
+      </div>
+      <div class="square-switch"><div class="switch-square-thumb"></div></div>
+    </div>
+
+    <div class="sensitivity-row">
+      <div class="sens-header">
+        <span class="sens-lbl">SENSITIVITY</span>
+        <span class="sens-val" id="sens-val-display">85%</span>
+      </div>
+      <input type="range" class="custom-range" id="sens-slider" min="10" max="100" value="85" oninput="document.getElementById('sens-val-display').textContent=this.value+'%'">
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- SECTION 03 — RUN ANALYSIS -->
+    <div class="run-section">
+      <button class="btn-analyse-main" id="btn-run-analysis" disabled onclick="handleRunAnalysis()">RUN ANALYSIS</button>
+      <div class="run-hint" id="run-hint-text">SELECT BOTH DOCUMENTS</div>
+
+      <div class="progress-box" id="progress-box">
+        <span class="progress-step-text" id="progress-step-text">Loading documents...</span>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- SECTION 04 — SESSION STATS -->
+    <div class="stats-section">
+      <span class="section-label" style="padding:0 0 12px 0;">04 / SESSION</span>
+      <div class="stats-grid-3">
+        <div class="stat-col">
+          <span class="stat-num-val" id="stat-docs">0</span>
+          <span class="stat-num-lbl">DOCS LOADED</span>
+        </div>
+        <div class="stat-col">
+          <span class="stat-num-val" id="stat-runs">0</span>
+          <span class="stat-num-lbl">ANALYSES RUN</span>
+        </div>
+        <div class="stat-col">
+          <span class="stat-num-val" id="stat-status">IDLE</span>
+          <span class="stat-num-lbl">STATUS</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- RIGHT MAIN AREA -->
+  <section class="right-main-area" id="canvas-container">
+    <canvas id="main-canvas"></canvas>
+    <div class="overlay-buttons">
+      <button class="overlay-btn" onclick="resetSlots()">[RESET]</button>
+      <button class="overlay-btn" onclick="exportPNG()">[EXPORT PNG]</button>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // State 1: IDLE, State 2: FILES_LOADED, State 3: ANALYSING, State 4: RESULTS
+  let currentState = 1;
+  let file1 = null;
+  let file2 = null;
+
+  // Session storage analyses count
+  let analysesRunCount = parseInt(sessionStorage.getItem('dae_analyses_run') || '0');
+  document.getElementById('stat-runs').textContent = analysesRunCount;
+
+  // Canvas setup
+  const canvas = document.getElementById('main-canvas');
+  const ctx = canvas.getContext('2d');
+  const canvasContainer = document.getElementById('canvas-container');
+  let width = 0, height = 0;
+  let mouseX = -1000, mouseY = -1000;
+
+  function resizeCanvas() {
+    width = canvasContainer.clientWidth;
+    height = canvasContainer.clientHeight;
+    canvas.width = width * window.devicePixelRatio;
+    canvas.height = height * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouseX = e.clientX - rect.left;
+    mouseY = e.clientY - rect.top;
+  });
+  canvas.addEventListener('mouseleave', () => {
+    mouseX = -1000;
+    mouseY = -1000;
+  });
+
+  // Upload slots setup
+  const zone1 = document.getElementById('zone-1');
+  const zone2 = document.getElementById('zone-2');
+  const file1Input = document.getElementById('file-1');
+  const file2Input = document.getElementById('file-2');
+  const btnRun = document.getElementById('btn-run-analysis');
+  const hintText = document.getElementById('run-hint-text');
+
+  zone1.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-file-btn')) return;
+    file1Input.click();
+  });
+  zone2.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-file-btn')) return;
+    file2Input.click();
+  });
+
+  file1Input.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) setSlotFile(1, e.target.files[0]);
+  });
+  file2Input.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) setSlotFile(2, e.target.files[0]);
+  });
+
+  document.querySelectorAll('.remove-file-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const slot = parseInt(btn.getAttribute('data-slot'));
+      clearSlot(slot);
+    });
+  });
+
+  [zone1, zone2].forEach((zone, idx) => {
+    const slotNum = idx + 1;
+    zone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      zone.classList.add('dragover');
+    });
+    zone.addEventListener('dragleave', () => {
+      zone.classList.remove('dragover');
+    });
+    zone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      zone.classList.remove('dragover');
+      if (e.dataTransfer.files.length > 0) {
+        setSlotFile(slotNum, e.dataTransfer.files[0]);
+      }
+    });
+  });
+
+  function setSlotFile(slotNum, file) {
+    if (slotNum === 1) file1 = file;
+    else file2 = file;
+
+    const zone = document.getElementById(`zone-${slotNum}`);
+    const emptyView = document.getElementById(`empty-view-${slotNum}`);
+    const loadedView = document.getElementById(`loaded-view-${slotNum}`);
+    const nameEl = document.getElementById(`filename-${slotNum}`);
+    const sizeEl = document.getElementById(`filesize-${slotNum}`);
+
+    zone.classList.add('loaded');
+    emptyView.style.display = 'none';
+    loadedView.style.display = 'flex';
+    nameEl.textContent = file.name;
+    sizeEl.textContent = formatSize(file.size);
+
+    updateDocsLoadedStat();
+    checkReadyState();
+  }
+
+  function clearSlot(slotNum) {
+    if (slotNum === 1) {
+      file1 = null;
+      file1Input.value = '';
+    } else {
+      file2 = null;
+      file2Input.value = '';
+    }
+
+    const zone = document.getElementById(`zone-${slotNum}`);
+    const emptyView = document.getElementById(`empty-view-${slotNum}`);
+    const loadedView = document.getElementById(`loaded-view-${slotNum}`);
+
+    zone.classList.remove('loaded');
+    emptyView.style.display = 'flex';
+    loadedView.style.display = 'none';
+
+    updateDocsLoadedStat();
+    if (currentState !== 3) {
+      if (!file1 || !file2) {
+        currentState = 1;
+        document.getElementById('stat-status').textContent = 'IDLE';
+      }
+    }
+    checkReadyState();
+  }
+
+  function resetSlots() {
+    clearSlot(1);
+    clearSlot(2);
+    currentState = 1;
+    document.getElementById('stat-status').textContent = 'IDLE';
+  }
+
+  function updateDocsLoadedStat() {
+    const count = (file1 ? 1 : 0) + (file2 ? 1 : 0);
+    document.getElementById('stat-docs').textContent = count;
+  }
+
+  function checkReadyState() {
+    if (file1 && file2) {
+      btnRun.disabled = false;
+      btnRun.classList.add('enabled');
+      hintText.textContent = 'ESTIMATED TIME: 30–90 SEC';
+      if (currentState === 1) {
+        currentState = 2;
+        document.getElementById('stat-status').textContent = 'READY';
+      }
+    } else {
+      btnRun.disabled = true;
+      btnRun.classList.remove('enabled');
+      hintText.textContent = 'SELECT BOTH DOCUMENTS';
+    }
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  function toggleSwitch(row) {
+    const isCurrentlyOn = row.getAttribute('data-on') === 'true';
+    row.setAttribute('data-on', isCurrentlyOn ? 'false' : 'true');
+  }
+
+  // --- FETCH & EXECUTE ANALYSIS ---
+  let progressTimer = null;
+  const steps = [
+    "Loading documents...",
+    "Splitting into chunks...",
+    "Building vector stores...",
+    "Running similarity search...",
+    "Detecting contradictions...",
+    "Compiling results..."
+  ];
+
+  function handleRunAnalysis() {
+    if (!file1 || !file2) return;
+
+    currentState = 3;
+    document.getElementById('stat-status').textContent = 'LOADING';
+    btnRun.disabled = true;
+
+    // Show Progress Box
+    const progressBox = document.getElementById('progress-box');
+    const stepText = document.getElementById('progress-step-text');
+    const fillEl = document.getElementById('progress-fill');
+    progressBox.classList.add('visible');
+
+    let currentStepIdx = 0;
+    fillEl.style.width = '10%';
+    stepText.textContent = steps[0];
+
+    // Cycle step labels every 8s
+    progressTimer = setInterval(() => {
+      currentStepIdx = (currentStepIdx + 1) % steps.length;
+      stepText.textContent = steps[currentStepIdx];
+      const widthPct = Math.min(90, 15 + currentStepIdx * 15);
+      fillEl.style.width = `${widthPct}%`;
+    }, 8000);
+
+    // Build FormData and send POST to /compare
+    const formData = new FormData();
+    formData.append('doc_a', file1);
+    formData.append('doc_b', file2);
+
+    fetch('/compare', {
+      method: 'POST',
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      clearInterval(progressTimer);
+
+      if (data.error) {
+        showErrorBanner(data.error);
+        progressBox.classList.remove('visible');
+        currentState = 2;
+        document.getElementById('stat-status').textContent = 'READY';
+        btnRun.disabled = false;
+      } else {
+        fillEl.style.width = '100%';
+        stepText.textContent = 'Compiling results...';
+
+        // Increment analyses count
+        analysesRunCount++;
+        sessionStorage.setItem('dae_analyses_run', analysesRunCount.toString());
+        document.getElementById('stat-runs').textContent = analysesRunCount;
+        document.getElementById('stat-status').textContent = 'DONE';
+
+        currentState = 4; // STATE 4 Results preview
+
+        // 1.5s Auto-redirect to /results
+        setTimeout(() => {
+          window.location.href = data.redirect_url || `/results?id=${data.id}`;
+        }, 1500);
+      }
+    })
+    .catch(err => {
+      clearInterval(progressTimer);
+      showErrorBanner("Error processing documents: " + err.message);
+      progressBox.classList.remove('visible');
+      currentState = 2;
+      document.getElementById('stat-status').textContent = 'READY';
+      btnRun.disabled = false;
+    });
+  }
+
+  function showErrorBanner(msg) {
+    const banner = document.getElementById('error-banner');
+    const textEl = document.getElementById('error-banner-text');
+    textEl.textContent = msg;
+    banner.style.display = 'flex';
+    setTimeout(hideErrorBanner, 5000);
+  }
+
+  function hideErrorBanner() {
+    document.getElementById('error-banner').style.display = 'none';
+  }
+
+  function exportPNG() {
+    const a = document.createElement('a');
+    a.download = `dae-analysis-${Date.now()}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  }
+
+  // --- CANVAS ANIMATION LOOP (4 STATES) ---
+  const particles = [];
+  for (let i = 0; i < 80; i++) {
+    particles.push({
+      x: Math.random() * 800,
+      y: Math.random() * 600,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      alpha: Math.random() * 0.6 + 0.3,
+      color: Math.random() < 0.05 ? '#1A6B00' : '#D4CFC4',
+      size: 1.5,
+      group: i % 2 === 0 ? 1 : 2
+    });
+  }
+
+  let scanLineY = 0;
+
+  function renderCanvas(time) {
+    ctx.fillStyle = '#F5F0E8';
+    ctx.fillRect(0, 0, width, height);
+
+    if (currentState === 1) { // IDLE
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = width; if (p.x > width) p.x = 0;
+        if (p.y < 0) p.y = height; if (p.y > height) p.y = 0;
+
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.alpha;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+      });
+      ctx.globalAlpha = 1.0;
+
+      ctx.fillStyle = '#C4BFB4';
+      ctx.font = '13px "Space Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('DROP TWO DOCUMENTS TO BEGIN', width / 2, height / 2);
+
+    } else if (currentState === 2) { // FILES LOADED
+      const f1 = { x: width * 0.3, y: height * 0.5 };
+      const f2 = { x: width * 0.7, y: height * 0.5 };
+
+      particles.forEach(p => {
+        const target = p.group === 1 ? f1 : f2;
+        p.vx += (target.x - p.x) * 0.001;
+        p.vy += (target.y - p.y) * 0.001;
+        p.vx *= 0.92; p.vy *= 0.92;
+        p.x += p.vx; p.y += p.vy;
+
+        ctx.fillStyle = p.color === '#1A6B00' ? '#1A6B00' : '#D4CFC4';
+        ctx.globalAlpha = p.alpha;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+      });
+      ctx.globalAlpha = 1.0;
+
+      ctx.fillStyle = '#1A6B00';
+      ctx.font = '13px "Space Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('READY TO ANALYSE', width / 2, height / 2);
+
+    } else if (currentState === 3) { // ANALYSING SCAN
+      scanLineY += 2;
+      if (scanLineY > height) scanLineY = 0;
+
+      ctx.strokeStyle = '#1A6B00';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, scanLineY);
+      ctx.lineTo(width, scanLineY);
+      ctx.stroke();
+
+      ctx.fillStyle = '#0A0A0A';
+      ctx.font = '12px "Space Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('CROSS-DOCUMENT VECTOR SEARCH IN PROGRESS...', width / 2, height / 2);
+
+    } else if (currentState === 4) { // RESULTS PREVIEW
+      ctx.fillStyle = '#1A6B00';
+      ctx.font = '16px "Space Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('ANALYSIS COMPLETE — REDIRECTING...', width / 2, height / 2);
+    }
+
+    requestAnimationFrame(renderCanvas);
+  }
+
+  requestAnimationFrame(renderCanvas);
+</script>
+{% endblock %}

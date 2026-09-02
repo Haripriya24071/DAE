@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}DAE — Data Analyser Engine{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F5F0E8;
+      --surface: #EDEAE0;
+      --surface-2: #E4E0D5;
+      --border: #D4CFC4;
+      --border-strong: #AAAAAA;
+      --ink: #0A0A0A;
+      --ink-2: #6B6760;
+      --ink-3: #AAAAAA;
+      --accent: #1A6B00;
+      --accent-bg: #F0F7EC;
+      --accent-bright: #C8FF00;
+      --red: #CC2200;
+      --amber: #996600;
+      --white: #FDFCFA;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      border-radius: 0 !important;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg);
+      color: var(--ink);
+      font-family: 'Space Grotesk', sans-serif;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Allowed Shadow: 3px 3px 0px #D4CFC4 only */
+    .hard-shadow {
+      box-shadow: 3px 3px 0px var(--border);
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--surface);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--accent);
+    }
+
+    /* NAV BAR (48px) */
+    nav.top-nav {
+      height: 48px;
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+
+    .nav-logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--ink);
+      letter-spacing: 6px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .nav-logo:hover {
+      color: var(--accent);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .nav-link {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: var(--ink-2);
+      letter-spacing: 3px;
+      text-decoration: none;
+      text-transform: uppercase;
+      padding: 14px 0;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .nav-link:hover {
+      color: var(--ink);
+    }
+    .nav-link.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-clock {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+
+    /* FLASH MESSAGES STRIP */
+    .flash-container {
+      width: 100%;
+      z-index: 99;
+    }
+    .flash-msg {
+      padding: 10px 24px;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .flash-msg.error {
+      background-color: rgba(204, 34, 0, 0.1);
+      border-bottom: 1px solid var(--red);
+      color: var(--red);
+    }
+    .flash-msg.success {
+      background-color: var(--accent-bg);
+      border-bottom: 1px solid var(--accent);
+      color: var(--accent);
+    }
+
+    /* MAIN BODY CONTAINER */
+    main.app-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* FOOTER (36px) */
+    footer.bottom-footer {
+      height: 36px;
+      background: var(--white);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+
+    .footer-text {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      color: var(--ink-3);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* CURSOR TRAIL CANVAS OVERLAY */
+    #cursor-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 99999;
+    }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <canvas id="cursor-canvas"></canvas>
+
+  <!-- NAV BAR -->
+  <nav class="top-nav">
+    <a href="/" class="nav-logo">[ DAE ]</a>
+    <div class="nav-links">
+      <a href="/" class="nav-link {% if request.path == '/' or request.path == '/dashboard' %}active{% endif %}">HOME</a>
+      <a href="/dashboard" class="nav-link {% if request.path == '/dashboard' %}active{% endif %}">ANALYSE</a>
+      <a href="/results" class="nav-link {% if request.path == '/results' or request.path == '/result' %}active{% endif %}">RESULTS</a>
+      <a href="/history" class="nav-link {% if request.path == '/history' %}active{% endif %}">HISTORY</a>
+    </div>
+    <div class="nav-right">
+      <div class="nav-clock" id="nav-clock">00:00:00</div>
+    </div>
+  </nav>
+
+  <!-- FLASH MESSAGES -->
+  <div class="flash-container" id="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-msg {{ category }}">
+            <span>{{ message }}</span>
+            <span style="cursor:pointer;" onclick="this.parentElement.remove()">✕</span>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- MAIN BODY -->
+  <main class="app-main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bottom-footer">
+    <div class="footer-text">DAE v2.0</div>
+    <div class="footer-text">BUILT BY DAE ENGINE</div>
+  </footer>
+
+  <script>
+    // Live Clock
+    function updateNavClock() {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      const clockEl = document.getElementById('nav-clock');
+      if (clockEl) clockEl.textContent = `${hh}:${mm}:${ss}`;
+    }
+    setInterval(updateNavClock, 1000);
+    updateNavClock();
+
+    // Auto-hide Flash Messages after 4s
+    setTimeout(() => {
+      const flashes = document.querySelectorAll('.flash-msg');
+      flashes.forEach(f => {
+        f.style.transition = 'opacity 0.5s';
+        f.style.opacity = '0';
+        setTimeout(() => f.remove(), 500);
+      });
+    }, 4000);
+
+    // Subtle Cursor Trail Effect
+    (function() {
+      const cCanvas = document.getElementById('cursor-canvas');
+      if (!cCanvas) return;
+      const cCtx = cCanvas.getContext('2d');
+      let dots = [];
+
+      function resizeC() {
+        cCanvas.width = window.innerWidth;
+        cCanvas.height = window.innerHeight;
+      }
+      window.addEventListener('resize', resizeC);
+      resizeC();
+
+      window.addEventListener('mousemove', (e) => {
+        dots.push({ x: e.clientX, y: e.clientY, alpha: 0.15, size: 2 });
+        if (dots.length > 25) dots.shift();
+      });
+
+      function renderTrail() {
+        cCtx.clearRect(0, 0, cCanvas.width, cCanvas.height);
+        for (let i = 0; i < dots.length; i++) {
+          const d = dots[i];
+          cCtx.fillStyle = 'rgba(10, 10, 10, ' + d.alpha + ')';
+          cCtx.beginPath();
+          cCtx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
+          cCtx.fill();
+          d.alpha *= 0.92;
+        }
+        dots = dots.filter(d => d.alpha > 0.01);
+        requestAnimationFrame(renderTrail);
+      }
+      requestAnimationFrame(renderTrail);
+    })();
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

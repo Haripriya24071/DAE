@@ -1,0 +1,11 @@
+flask
+PyMuPDF
+scikit-learn
+nltk
+python-dotenv
+langchain
+langchain-groq
+langchain-huggingface
+langchain-community
+faiss-cpu
+sentence-transformers

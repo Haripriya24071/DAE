@@ -1,0 +1,1137 @@
+{% extends "base.html" %}
+
+{% block title %}DAE — Data Analyser Engine{% endblock %}
+
+{% block head %}
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  .home-scroll-container {
+    flex: 1;
+    overflow-y: auto;
+    background-color: var(--bg);
+    scroll-behavior: smooth;
+  }
+
+  /* SECTION 1 — HERO */
+  section.hero-section {
+    min-height: calc(100vh - 84px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 40px 60px;
+    background-color: var(--bg);
+    position: relative;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-left {
+    flex: 1;
+    max-width: 540px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(120px, 18vw, 220px);
+    color: var(--ink);
+    letter-spacing: -4px;
+    line-height: 0.9;
+    user-select: none;
+  }
+
+  .hero-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-2);
+    letter-spacing: 6px;
+    margin-top: 4px;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+  }
+
+  .hero-desc {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px;
+    color: var(--ink);
+    max-width: 420px;
+    line-height: 1.7;
+    margin-bottom: 32px;
+  }
+
+  .hero-buttons {
+    display: flex;
+    gap: 16px;
+  }
+
+  .btn-cta-primary {
+    background: var(--ink);
+    color: var(--bg);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    padding: 14px 28px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-weight: 700;
+    transition: background-color 0.15s, color 0.15s;
+    display: inline-block;
+  }
+  .btn-cta-primary:hover {
+    background: var(--accent);
+    color: var(--white);
+  }
+
+  .btn-cta-secondary {
+    background: transparent;
+    color: var(--ink);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    padding: 14px 28px;
+    border: 1px solid var(--ink);
+    cursor: pointer;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-weight: 700;
+    transition: background-color 0.15s, color 0.15s;
+    display: inline-block;
+  }
+  .btn-cta-secondary:hover {
+    background: var(--ink);
+    color: var(--bg);
+  }
+
+  .hero-right {
+    flex: 1;
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  #hero-canvas {
+    width: 100%;
+    height: 400px;
+    display: block;
+  }
+
+  /* SECTION 2 — HOW IT WORKS */
+  section.how-section {
+    background: var(--surface);
+    padding: 80px 40px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-2);
+    letter-spacing: 5px;
+    text-align: center;
+    margin-bottom: 48px;
+    text-transform: uppercase;
+  }
+
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .step-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .step-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 48px;
+    color: var(--surface-2);
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 8px;
+    user-select: none;
+  }
+
+  .step-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .step-desc {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    color: var(--ink-2);
+    line-height: 1.6;
+    max-width: 220px;
+  }
+
+  /* Connecting arrow between steps */
+  .step-arrow {
+    position: absolute;
+    top: 24px;
+    right: -16px;
+    width: 20px;
+    height: 1px;
+    background: var(--border);
+  }
+  .step-arrow::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: -3px;
+    width: 0;
+    height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 6px solid var(--border);
+  }
+
+  /* SECTION 3 — INTERACTIVE MINI TUTORIAL */
+  section.demo-section {
+    background: var(--bg);
+    padding: 80px 40px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .demo-box {
+    max-width: 900px;
+    margin: 0 auto;
+    background: var(--white);
+    border: 1px solid var(--border);
+    display: flex;
+    min-height: 380px;
+  }
+
+  .demo-terminal {
+    flex: 1;
+    background: #0A0A0A;
+    padding: 24px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: #C8FF00;
+    line-height: 1.8;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .terminal-cursor {
+    animation: blink 0.8s infinite;
+  }
+
+  .demo-preview {
+    flex: 1;
+    padding: 24px;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    justify-content: center;
+  }
+
+  .demo-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    padding: 14px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .demo-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .demo-card-snippets {
+    display: flex;
+    gap: 12px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px;
+    color: var(--ink);
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+  .demo-card-snip {
+    flex: 1;
+  }
+
+  .demo-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    padding: 2px 8px;
+    font-weight: 700;
+    display: inline-block;
+    margin-right: 6px;
+  }
+  .demo-badge.disagree {
+    background: rgba(204, 34, 0, 0.1);
+    color: var(--red);
+    border: 1px solid rgba(204, 34, 0, 0.3);
+  }
+  .demo-badge.agree {
+    background: rgba(26, 107, 0, 0.1);
+    color: var(--accent);
+    border: 1px solid rgba(26, 107, 0, 0.3);
+  }
+
+  .demo-reason {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px;
+    color: var(--ink-2);
+  }
+
+  /* SECTION 4 — EXAMPLE RESULTS */
+  section.examples-section {
+    background: var(--surface);
+    padding: 80px 40px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .examples-container {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .subtext {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    color: var(--ink-2);
+    text-align: center;
+    margin-top: -36px;
+    margin-bottom: 32px;
+  }
+
+  .example-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .example-card:hover {
+    border-color: var(--ink);
+  }
+
+  .ex-card-body {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ex-card-col {
+    flex: 1;
+    padding: 16px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+  .ex-card-col:first-child {
+    border-right: 1px solid var(--border);
+  }
+
+  .ex-card-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    color: var(--ink-3);
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .ex-card-footer {
+    padding: 12px 16px;
+    background: var(--surface-2);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .cta-center-row {
+    text-align: center;
+    margin-top: 32px;
+  }
+
+  /* SECTION 5 — FALLING RECTANGULAR TIP CARDS */
+  .falling-tip-card {
+    position: fixed;
+    width: 220px;
+    background: #FDFCFA;
+    border: 1px solid #D4CFC4;
+    box-shadow: 3px 3px 0px #D4CFC4;
+    padding: 12px 16px;
+    border-radius: 0 !important;
+    z-index: 1000;
+    user-select: none;
+    top: -340px;
+    left: 0;
+    transform-origin: center center;
+    transition: border-color 0.08s ease, opacity 0.5s ease;
+  }
+
+  #tip-card-1 {
+    border-left: 3px solid #CC2200;
+  }
+
+  #tip-card-2 {
+    border-left: 3px solid #1A6B00;
+  }
+
+  #tip-card-3 {
+    border-left: 3px solid #996600;
+  }
+
+  .tip-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    color: #AAAAAA;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+
+  .tip-card-close {
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    color: #AAAAAA;
+    font-size: 12px;
+  }
+  .tip-card-close:hover {
+    color: #0A0A0A;
+  }
+
+  .tip-card-body {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    line-height: 1.6;
+    color: #0A0A0A;
+  }
+
+  /* FOOTER CTA STRIP */
+  section.ready-section {
+    padding: 60px 20px;
+    text-align: center;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .ready-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-2);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="home-scroll-container" id="home-scroll">
+  <!-- SECTION 1 — HERO -->
+  <section class="hero-section">
+    <div class="hero-left">
+      <h1 class="hero-title">DAE</h1>
+      <div class="hero-sub">DATA ANALYSER ENGINE</div>
+      <p class="hero-desc">
+        Upload two PDFs. DAE finds where they agree, contradict, and what each one misses entirely — using a dual-vector RAG architecture.
+      </p>
+      <div class="hero-buttons">
+        <a href="/dashboard" class="btn-cta-primary">START ANALYSING →</a>
+        <a href="/history" class="btn-cta-secondary">VIEW HISTORY</a>
+      </div>
+    </div>
+    <div class="hero-right">
+      <canvas id="hero-canvas"></canvas>
+    </div>
+  </section>
+
+  <!-- SECTION 2 — HOW IT WORKS -->
+  <section class="how-section">
+    <div class="section-tag">HOW DAE WORKS</div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <span class="step-num">01</span>
+        <h3 class="step-title">Upload two PDFs</h3>
+        <p class="step-desc">Drop any two documents — contracts, research papers, policy versions, textbook chapters.</p>
+        <div class="step-arrow"></div>
+      </div>
+
+      <div class="step-card">
+        <span class="step-num">02</span>
+        <h3 class="step-title">DAE builds dual vector stores</h3>
+        <p class="step-desc">Each PDF is split into chunks and embedded using a local model. Two FAISS indexes, one per document.</p>
+        <div class="step-arrow"></div>
+      </div>
+
+      <div class="step-card">
+        <span class="step-num">03</span>
+        <h3 class="step-title">Cross-document similarity search</h3>
+        <p class="step-desc">Every chunk in Doc A is matched against Doc B's vector store. High-similarity pairs go to an LLM for judgment.</p>
+        <div class="step-arrow"></div>
+      </div>
+
+      <div class="step-card">
+        <span class="step-num">04</span>
+        <h3 class="step-title">Results with evidence</h3>
+        <p class="step-desc">Contradictions shown side by side. Agreements confirmed. Blind spots revealed. Export as JSON or TXT.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 3 — INTERACTIVE MINI TUTORIAL -->
+  <section class="demo-section" id="demo-section">
+    <div class="section-tag">SEE IT IN ACTION</div>
+    <div class="demo-box hard-shadow">
+      <div class="demo-terminal">
+        <div id="terminal-text"></div>
+        <span class="terminal-cursor">|</span>
+      </div>
+      <div class="demo-preview">
+        <div class="demo-card hard-shadow" id="card-contradiction">
+          <div class="demo-card-snippets">
+            <div class="demo-card-snip"><strong>Doc A:</strong> "...notice period of 30 days shall apply..."</div>
+            <div class="demo-card-snip"><strong>Doc B:</strong> "...minimum 14-day notice required..."</div>
+          </div>
+          <div>
+            <span class="demo-badge disagree">DISAGREE</span>
+            <span class="demo-reason">Doc A states 30-day, Doc B states 14-day notice period</span>
+          </div>
+        </div>
+
+        <div class="demo-card hard-shadow" id="card-agreement">
+          <div>
+            <span class="demo-badge agree">AGREE</span>
+            <span class="demo-reason">Both documents require written notice for termination</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 4 — EXAMPLE RESULTS -->
+  <section class="examples-section" id="examples-section">
+    <div class="section-tag">EXAMPLE ANALYSIS</div>
+    <div class="subtext">contract_v1.pdf vs contract_v2.pdf — click any card to expand</div>
+
+    <div class="examples-container">
+      <!-- Card 1 -->
+      <div class="example-card hard-shadow" onclick="toggleExpand(this)">
+        <div class="ex-card-body">
+          <div class="ex-card-col">
+            <span class="ex-card-tag">DOC A</span>
+            <span class="card-text-short">The employee shall provide thirty (30) days written notice...</span>
+            <span class="card-text-full" style="display:none;">The employee shall provide thirty (30) days written notice prior to termination of employment.</span>
+          </div>
+          <div class="ex-card-col">
+            <span class="ex-card-tag">DOC B</span>
+            <span class="card-text-short">A minimum notice period of fourteen (14) days is required...</span>
+            <span class="card-text-full" style="display:none;">A minimum notice period of fourteen (14) days is required from either party.</span>
+          </div>
+        </div>
+        <div class="ex-card-footer">
+          <span class="demo-badge disagree">DISAGREE</span>
+          <span class="demo-reason">Notice period differs: 30 days in Doc A versus 14 days in Doc B.</span>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="example-card hard-shadow" onclick="toggleExpand(this)">
+        <div class="ex-card-body">
+          <div class="ex-card-col">
+            <span class="ex-card-tag">DOC A</span>
+            <span class="card-text-short">Compensation shall be reviewed annually at the discretion...</span>
+            <span class="card-text-full" style="display:none;">Compensation shall be reviewed annually at the discretion of management.</span>
+          </div>
+          <div class="ex-card-col">
+            <span class="ex-card-tag">DOC B</span>
+            <span class="card-text-short">Performance-based salary reviews occur bi-annually...</span>
+            <span class="card-text-full" style="display:none;">Performance-based salary reviews occur bi-annually, subject to company performance.</span>
+          </div>
+        </div>
+        <div class="ex-card-footer">
+          <span class="demo-badge" style="background: rgba(153, 102, 0, 0.1); color: var(--amber); border: 1px solid rgba(153, 102, 0, 0.3);">PARTIALLY AGREE</span>
+          <span class="demo-reason">Both mention salary reviews but differ on frequency and criteria.</span>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="example-card hard-shadow" onclick="toggleExpand(this)">
+        <div class="ex-card-body">
+          <div class="ex-card-col">
+            <span class="ex-card-tag">DOC A</span>
+            <span class="card-text-short">All confidential information remains the property of the company...</span>
+            <span class="card-text-full" style="display:none;">All confidential information remains the property of the company upon termination.</span>
+          </div>
+          <div class="ex-card-col">
+            <span class="ex-card-tag">DOC B</span>
+            <span class="card-text-short">Proprietary information and trade secrets revert to company...</span>
+            <span class="card-text-full" style="display:none;">Proprietary information and trade secrets revert to company ownership upon contract end.</span>
+          </div>
+        </div>
+        <div class="ex-card-footer">
+          <span class="demo-badge agree">AGREE</span>
+          <span class="demo-reason">Both documents align on confidentiality and IP ownership post-termination.</span>
+        </div>
+      </div>
+
+      <div class="cta-center-row">
+        <a href="/dashboard" class="btn-cta-primary">RUN YOUR OWN ANALYSIS →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER CTA -->
+  <section class="ready-section">
+    <div class="ready-title">READY TO ANALYSE?</div>
+    <a href="/dashboard" class="btn-cta-primary">START ANALYSING →</a>
+  </section>
+</div>
+
+<!-- FALLING TIP CARDS CONTAINER -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // --- SECTION 1: HERO CANVAS ANIMATION ---
+  (function() {
+    const canvas = document.getElementById('hero-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    function resizeH() {
+      const parent = canvas.parentElement;
+      canvas.width = parent.clientWidth * window.devicePixelRatio;
+      canvas.height = 400 * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+    window.addEventListener('resize', resizeH);
+    resizeH();
+
+    const labels = [
+      { text: "CONTRADICTION DETECTED", color: "#CC2200" },
+      { text: "AGREEMENT FOUND", color: "#1A6B00" },
+      { text: "BLIND SPOT", color: "#996600" }
+    ];
+    let labelIdx = 0;
+    let labelAlpha = 0;
+    let labelState = 0; // 0: fadeIn, 1: hold, 2: fadeOut
+    let labelTimer = performance.now();
+
+    const particles = [];
+    for (let i = 0; i < 15; i++) {
+      particles.push({
+        progress: Math.random(),
+        speed: 0.003 + Math.random() * 0.004,
+        offsetY: (Math.random() - 0.5) * 40
+      });
+    }
+
+    function renderHeroCanvas(time) {
+      const w = canvas.clientWidth;
+      const h = 400;
+      ctx.fillStyle = '#F5F0E8';
+      ctx.fillRect(0, 0, w, h);
+
+      const rectW = 120;
+      const rectH = 160;
+      const rectA = { x: w * 0.2 - rectW / 2, y: h * 0.5 - rectH / 2 };
+      const rectB = { x: w * 0.8 - rectW / 2, y: h * 0.5 - rectH / 2 };
+
+      // Connecting lines
+      ctx.strokeStyle = '#D4CFC4';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(rectA.x + rectW, rectA.y + rectH / 2);
+      ctx.lineTo(rectB.x, rectB.y + rectH / 2);
+      ctx.stroke();
+
+      // Particles along connecting line
+      particles.forEach(p => {
+        p.progress += p.speed;
+        if (p.progress > 1) p.progress = 0;
+
+        const px = (rectA.x + rectW) + p.progress * (rectB.x - (rectA.x + rectW));
+        const py = (h * 0.5) + p.offsetY * Math.sin(p.progress * Math.PI);
+
+        ctx.fillStyle = '#1A6B00';
+        ctx.fillRect(px, py, 3, 3);
+      });
+
+      // Draw Rect A
+      drawDocRect(rectA.x, rectA.y, rectW, rectH, "DOC A");
+      // Draw Rect B
+      drawDocRect(rectB.x, rectB.y, rectW, rectH, "DOC B");
+
+      // Cycle Label Logic
+      const now = performance.now();
+      const elapsed = now - labelTimer;
+
+      if (labelState === 0) { // Fade in
+        labelAlpha = Math.min(1, elapsed / 500);
+        if (labelAlpha >= 1) {
+          labelState = 1;
+          labelTimer = now;
+        }
+      } else if (labelState === 1) { // Hold 1.5s
+        labelAlpha = 1;
+        if (elapsed >= 1500) {
+          labelState = 2;
+          labelTimer = now;
+        }
+      } else if (labelState === 2) { // Fade out
+        labelAlpha = Math.max(0, 1 - elapsed / 500);
+        if (labelAlpha <= 0) {
+          labelState = 0;
+          labelIdx = (labelIdx + 1) % labels.length;
+          labelTimer = now;
+        }
+      }
+
+      // Draw Center Floating Label
+      const currentLbl = labels[labelIdx];
+      ctx.globalAlpha = labelAlpha;
+      ctx.fillStyle = currentLbl.color;
+      ctx.font = '10px "Space Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.letterSpacing = '2px';
+      ctx.fillText(currentLbl.text, w / 2, h / 2 - 15);
+      ctx.globalAlpha = 1.0;
+
+      requestAnimationFrame(renderHeroCanvas);
+    }
+
+    function drawDocRect(x, y, w, h, label) {
+      // Hard shadow
+      ctx.fillStyle = '#D4CFC4';
+      ctx.fillRect(x + 4, y + 4, w, h);
+
+      // Rect body
+      ctx.fillStyle = '#FDFCFA';
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = '#0A0A0A';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, y, w, h);
+
+      // Label
+      ctx.fillStyle = '#0A0A0A';
+      ctx.font = '9px "Space Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, x + w / 2, y + 24);
+
+      // 6 text simulation lines
+      ctx.fillStyle = '#E4E0D5';
+      for (let i = 0; i < 6; i++) {
+        ctx.fillRect(x + 16, y + 44 + i * 16, w - 32, 4);
+      }
+    }
+
+    requestAnimationFrame(renderHeroCanvas);
+  })();
+
+  // --- SECTION 3: TYPEWRITER & PREVIEW DEMO ---
+  (function() {
+    const lines = [
+      "> Loading doc_a: contract_v1.pdf",
+      "> Loading doc_b: contract_v2.pdf",
+      "> Building vector store A... done (47 chunks)",
+      "> Building vector store B... done (52 chunks)",
+      "> Running cross-document search...",
+      "> Contradiction found at chunk 12",
+      "> LLM verdict: DISAGREE",
+      "> Reason: Doc A states 30-day notice period, Doc B states 14-day",
+      "> Agreement found at chunk 8",
+      "> Analysis complete. 3 contradictions, 7 agreements, 2 blind spots."
+    ];
+
+    const termEl = document.getElementById('terminal-text');
+    const cardContra = document.getElementById('card-contradiction');
+    const cardAgree = document.getElementById('card-agreement');
+    if (!termEl) return;
+
+    let lineIdx = 0;
+    let charIdx = 0;
+
+    function typeNextChar() {
+      if (lineIdx >= lines.length) {
+        // Pause 3 seconds then restart
+        setTimeout(() => {
+          termEl.innerHTML = '';
+          cardContra.classList.remove('visible');
+          cardAgree.classList.remove('visible');
+          lineIdx = 0;
+          charIdx = 0;
+          typeNextChar();
+        }, 3000);
+        return;
+      }
+
+      const currentLine = lines[lineIdx];
+
+      if (charIdx === 0) {
+        const div = document.createElement('div');
+        div.id = `term-line-${lineIdx}`;
+        termEl.appendChild(div);
+      }
+
+      const currentDiv = document.getElementById(`term-line-${lineIdx}`);
+      currentDiv.textContent = currentLine.slice(0, charIdx + 1);
+      charIdx++;
+
+      // Trigger preview cards based on text milestones
+      if (currentLine.includes("Contradiction found")) {
+        cardContra.classList.add('visible');
+      }
+      if (currentLine.includes("Agreement found")) {
+        cardAgree.classList.add('visible');
+      }
+
+      if (charIdx < currentLine.length) {
+        setTimeout(typeNextChar, 50);
+      } else {
+        lineIdx++;
+        charIdx = 0;
+        setTimeout(typeNextChar, 300);
+      }
+    }
+
+    typeNextChar();
+  })();
+
+  // --- SECTION 4: CARD EXPAND/COLLAPSE ---
+  function toggleExpand(card) {
+    const shortTexts = card.querySelectorAll('.card-text-short');
+    const fullTexts = card.querySelectorAll('.card-text-full');
+
+    shortTexts.forEach(st => {
+      st.style.display = st.style.display === 'none' ? 'inline' : 'none';
+    });
+    fullTexts.forEach(ft => {
+      ft.style.display = ft.style.display === 'none' ? 'inline' : 'none';
+    });
+  }
+
+  // --- SECTION 5: FALLING CARDS PHYSICS & SCROLL OBSERVER ---
+  (function() {
+    const tipsData = [
+      {
+        id: 'tip-card-1',
+        key: 'tip_01_dismissed',
+        headerText: 'TIP 01 / 03',
+        bodyText: 'DAE works best with documents on the same topic — two versions of a contract, two research papers, two policy docs.',
+        dropDelay: 800,
+        getStartX: () => window.innerWidth - 255
+      },
+      {
+        id: 'tip-card-2',
+        key: 'tip_02_dismissed',
+        headerText: 'TIP 02 / 03',
+        bodyText: 'The terminal demo is simulated. Your real analysis runs on your actual PDFs using local AI embeddings.',
+        dropDelay: 1800,
+        getStartX: () => window.innerWidth - 245
+      },
+      {
+        id: 'tip-card-3',
+        key: 'tip_03_dismissed',
+        headerText: 'TIP 03 / 03',
+        bodyText: 'Results are downloadable as JSON or TXT. Every analysis is saved to history automatically.',
+        dropDelay: 2800,
+        getStartX: () => window.innerWidth - 250
+      }
+    ];
+
+    const activeCards = [];
+
+    tipsData.forEach(data => {
+      if (sessionStorage.getItem(data.key) === 'true') {
+        return;
+      }
+
+      const cardEl = document.createElement('div');
+      cardEl.className = 'falling-tip-card';
+      cardEl.id = data.id;
+
+      cardEl.innerHTML = `
+        <div class="tip-card-header">
+          <span>${data.headerText}</span>
+          <span class="tip-card-close">✕</span>
+        </div>
+        <div class="tip-card-body">
+          ${data.bodyText}
+        </div>
+      `;
+
+      document.body.appendChild(cardEl);
+
+      const closeBtn = cardEl.querySelector('.tip-card-close');
+
+      const cardObj = {
+        ...data,
+        x: data.getStartX(),
+        y: window.innerHeight - 340,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: 0,
+        angle: (Math.random() - 0.5) * 4,
+        angularVelocity: (Math.random() - 0.5) * 0.1,
+        width: 220,
+        height: 90,
+        isOnGround: false,
+        isSettled: false,
+        isDropped: false,
+        isDismissing: false,
+        settleCounter: 0,
+        isSquashing: false,
+        element: cardEl
+      };
+
+      closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dismissCard(cardObj);
+      });
+
+      cardEl.addEventListener('mouseenter', () => {
+        if (cardObj.isSettled && !cardObj.isDismissing) {
+          cardObj.vy = -2;
+          cardObj.isOnGround = false;
+          cardObj.isSettled = false;
+          cardObj.settleCounter = 0;
+        }
+      });
+
+      activeCards.push(cardObj);
+    });
+
+    function dismissCard(cardObj) {
+      if (cardObj.isDismissing) return;
+      cardObj.isDismissing = true;
+      cardObj.isSettled = false;
+      cardObj.isOnGround = false;
+      cardObj.vy = -15;
+      cardObj.vx = (Math.random() - 0.5) * 2;
+      cardObj.element.style.opacity = '0';
+      sessionStorage.setItem(cardObj.key, 'true');
+      setTimeout(() => {
+        if (cardObj.element.parentNode) {
+          cardObj.element.parentNode.removeChild(cardObj.element);
+        }
+      }, 500);
+    }
+
+    function dropCard(cardObj) {
+      if (cardObj.isDropped || cardObj.isDismissing) return;
+      cardObj.isDropped = true;
+      cardObj.y = window.innerHeight - 340;
+      cardObj.x = cardObj.getStartX();
+      cardObj.vy = 0;
+      cardObj.vx = (Math.random() - 0.5) * 0.4;
+      cardObj.angularVelocity = (Math.random() - 0.5) * 0.1;
+      cardObj.angle = (Math.random() - 0.5) * 4;
+    }
+
+    activeCards.forEach(card => {
+      setTimeout(() => {
+        dropCard(card);
+      }, card.dropDelay);
+    });
+
+    const scrollContainer = document.getElementById('home-scroll');
+    const demoSec = document.getElementById('demo-section');
+    const exSec = document.getElementById('examples-section');
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          if (entry.target.id === 'demo-section') {
+            const c2 = activeCards.find(c => c.id === 'tip-card-2');
+            if (c2) dropCard(c2);
+          }
+          if (entry.target.id === 'examples-section') {
+            const c3 = activeCards.find(c => c.id === 'tip-card-3');
+            if (c3) dropCard(c3);
+          }
+        }
+      });
+    }, { root: scrollContainer, threshold: 0.3 });
+
+    if (demoSec) observer.observe(demoSec);
+    if (exSec) observer.observe(exSec);
+
+    const gravity = 0.45;
+    const bounceDamping = 0.55;
+    const friction = 0.88;
+    const angularFriction = 0.90;
+
+    function physicsLoop() {
+      const liveCards = activeCards.filter(c => c.isDropped && c.element.parentNode);
+
+      liveCards.forEach(c => {
+        if (c.element.offsetHeight) {
+          c.height = c.element.offsetHeight;
+        }
+      });
+
+      liveCards.forEach(c => {
+        if (c.isDismissing) {
+          c.y += c.vy;
+          c.x += c.vx;
+          c.element.style.left = c.x + 'px';
+          c.element.style.top = c.y + 'px';
+          return;
+        }
+
+        if (c.isSettled) return;
+
+        c.vy += gravity;
+
+        c.x += c.vx;
+        c.y += c.vy;
+
+        c.angularVelocity = Math.max(-0.15, Math.min(0.15, c.angularVelocity));
+        c.angle += c.angularVelocity;
+        c.angle = Math.max(-8, Math.min(8, c.angle));
+
+        const cardWidth = 220;
+        const cardHeight = c.height || 90;
+        const yFloor = window.innerHeight - cardHeight - 30;
+        const xRight = window.innerWidth - cardWidth - 30;
+        const xLeft = window.innerWidth - 260;
+
+        if (c.y >= yFloor) {
+          c.y = yFloor;
+          c.vy *= -bounceDamping;
+          c.vx *= friction;
+          c.angularVelocity = Math.max(-0.15, Math.min(0.15, c.vx * 0.2));
+
+          c.isSquashing = true;
+          setTimeout(() => { c.isSquashing = false; }, 60);
+
+          if (Math.abs(c.vy) < 1.5) {
+            c.isOnGround = true;
+          }
+          if (Math.abs(c.vy) < 0.8) {
+            c.vy = 0;
+          }
+        }
+
+        if (c.x > xRight) {
+          c.x = xRight;
+          c.vx *= -0.4;
+          c.angularVelocity *= -0.5;
+        }
+
+        if (c.x < xLeft) {
+          c.x = xLeft;
+          c.vx *= -0.4;
+          c.angularVelocity *= -0.5;
+        }
+
+        if (c.isOnGround) {
+          c.vx *= friction;
+          c.angularVelocity = Math.max(-0.15, Math.min(0.15, c.vx * 0.15));
+          c.angularVelocity *= angularFriction;
+
+          const speed = Math.hypot(c.vx, c.vy);
+          if (speed < 0.1) {
+            c.settleCounter++;
+            if (c.settleCounter >= 60) {
+              c.isSettled = true;
+              c.angle = (Math.random() - 0.5) * 6;
+              c.angularVelocity = 0;
+              c.vx = 0;
+              c.vy = 0;
+            }
+          } else {
+            c.settleCounter = 0;
+          }
+        }
+      });
+
+      for (let i = 0; i < liveCards.length; i++) {
+        for (let j = i + 1; j < liveCards.length; j++) {
+          const c1 = liveCards[i];
+          const c2 = liveCards[j];
+
+          if (c1.isDismissing || c2.isDismissing) continue;
+
+          const h1 = c1.height || 90;
+          const h2 = c2.height || 90;
+
+          const overlapX = Math.min(c1.x + c1.width, c2.x + c2.width) - Math.max(c1.x, c2.x);
+          const overlapY = Math.min(c1.y + h1, c2.y + h2) - Math.max(c1.y, c2.y);
+
+          if (overlapX > 0 && overlapY > 0) {
+            if (overlapX < overlapY) {
+              if (c1.x < c2.x) {
+                c1.x -= overlapX * 0.5;
+                c2.x += overlapX * 0.5;
+              } else {
+                c1.x += overlapX * 0.5;
+                c2.x -= overlapX * 0.5;
+              }
+              const tmpVx = c1.vx;
+              c1.vx = c1.vx * 0.6 + c2.vx * 0.4;
+              c2.vx = c2.vx * 0.6 + tmpVx * 0.4;
+            } else {
+              if (c1.y < c2.y) {
+                c1.y -= overlapY * 0.5;
+                c2.y += overlapY * 0.5;
+              } else {
+                c1.y += overlapY * 0.5;
+                c2.y -= overlapY * 0.5;
+              }
+              const tmpVy = c1.vy;
+              c1.vy = c1.vy * 0.6 + c2.vy * 0.4;
+              c2.vy = c2.vy * 0.6 + tmpVy * 0.4;
+            }
+
+            c1.angularVelocity = Math.max(-0.15, Math.min(0.15, c1.angularVelocity + (Math.random() - 0.5) * 0.1));
+            c2.angularVelocity = Math.max(-0.15, Math.min(0.15, c2.angularVelocity + (Math.random() - 0.5) * 0.1));
+
+            c1.element.style.borderColor = '#0A0A0A';
+            c2.element.style.borderColor = '#0A0A0A';
+            setTimeout(() => {
+              c1.element.style.borderColor = '#D4CFC4';
+              c2.element.style.borderColor = '#D4CFC4';
+            }, 80);
+          }
+        }
+      }
+
+      liveCards.forEach(c => {
+        if (!c.isDismissing) {
+          c.element.style.left = c.x + 'px';
+          c.element.style.top = c.y + 'px';
+
+          let transformStr = `rotate(${c.angle}deg)`;
+          if (c.isSquashing) {
+            transformStr += ` scaleY(0.88) scaleX(1.08)`;
+          }
+          c.element.style.transform = transformStr;
+        }
+      });
+
+      requestAnimationFrame(physicsLoop);
+    }
+
+    requestAnimationFrame(physicsLoop);
+  })();
+</script>
+{% endblock %}

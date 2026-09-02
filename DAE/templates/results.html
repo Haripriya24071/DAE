@@ -1,0 +1,1301 @@
+{% extends "base.html" %}
+
+{% block title %}DAE — Analysis Results{% endblock %}
+
+{% block head %}
+<style>
+  .results-wrapper {
+    height: calc(100vh - 48px - 36px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  /* EXAMPLE BANNER */
+  .example-banner {
+    background: #C8FF00;
+    color: #0A0A0A;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    padding: 10px 24px;
+    font-weight: 700;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* TOP STRIP */
+  .top-strip {
+    height: 52px;
+    background: #EDEAE0;
+    border-bottom: 1px solid #D4CFC4;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .top-left-pair {
+    display: flex;
+    align-items: center;
+  }
+
+  .results-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    color: #AAAAAA;
+    letter-spacing: 4px;
+    margin-right: 20px;
+    text-transform: uppercase;
+  }
+
+  .file-pill {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    background: #FDFCFA;
+    border: 1px solid #D4CFC4;
+    padding: 4px 12px;
+    color: #0A0A0A;
+  }
+
+  .vs-span {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: #AAAAAA;
+    margin: 0 8px;
+  }
+
+  .top-actions-right {
+    display: flex;
+    gap: 8px;
+  }
+
+  .action-btn-top {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    padding: 6px 14px;
+    border: 1px solid #D4CFC4;
+    background: transparent;
+    color: #0A0A0A;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .action-btn-top:hover:not(.disabled) {
+    background: #0A0A0A;
+    color: #F5F0E8;
+    border-color: #0A0A0A;
+  }
+  .action-btn-top.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* STATS ROW */
+  .stats-row-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    padding: 20px 24px;
+    background: #F5F0E8;
+    border-bottom: 1px solid #D4CFC4;
+    flex-shrink: 0;
+  }
+
+  .res-stat-card {
+    background: #FDFCFA;
+    border: 1px solid #D4CFC4;
+    box-shadow: 3px 3px 0px #D4CFC4;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .res-stat-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 36px;
+    color: #0A0A0A;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .res-stat-lbl {
+    font-family: 'Space Mono', monospace;
+    font-size: 7px;
+    color: #AAAAAA;
+    letter-spacing: 3px;
+    margin-top: 4px;
+    text-transform: uppercase;
+  }
+
+  /* MAIN CONTENT AREA */
+  .main-content-split {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* LEFT PANEL (65%) */
+  .panel-left-content {
+    flex: 65;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* NARRATIVE REPORT PANEL */
+  .narrative-panel {
+    background: #FDFCFA;
+    border: 1px solid #D4CFC4;
+    box-shadow: 3px 3px 0px #D4CFC4;
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .narrative-top-bar {
+    padding: 12px 20px;
+    background: #EDEAE0;
+    border-bottom: 1px solid #D4CFC4;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .narrative-title-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    color: #AAAAAA;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .narrative-collapse-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    border: 1px solid #D4CFC4;
+    background: transparent;
+    color: #0A0A0A;
+    padding: 4px 10px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .narrative-collapse-btn:hover {
+    background: #0A0A0A;
+    color: #F5F0E8;
+  }
+
+  .narrative-body-container {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .narrative-section {
+    border-bottom: 1px solid #E4E0D5;
+    padding: 16px 24px;
+    display: flex;
+    flex-direction: column;
+  }
+  .narrative-section:last-child {
+    border-bottom: none;
+  }
+
+  .narrative-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding-left: 12px;
+    border-left: 3px solid #0A0A0A;
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+
+  .narrative-body-text {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    color: #0A0A0A;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    max-width: 760px;
+  }
+
+  .narrative-error-row {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: #AAAAAA;
+    padding: 16px 24px;
+  }
+
+  .tab-buttons-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #D4CFC4;
+    padding-bottom: 12px;
+  }
+
+  .tab-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    padding: 8px 16px;
+    border: 1px solid #D4CFC4;
+    background: transparent;
+    color: #6B6760;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background-color 0.15s, color 0.15s;
+  }
+  .tab-btn.active {
+    background: #0A0A0A;
+    color: #F5F0E8;
+    border-color: #0A0A0A;
+  }
+
+  .tab-pane {
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .tab-pane.active {
+    display: flex;
+  }
+
+  /* CARDS IN TABS */
+  .res-item-card {
+    background: #FDFCFA;
+    border: 1px solid #D4CFC4;
+    box-shadow: 3px 3px 0px #D4CFC4;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  /* SIMILARITY INTENSITY BAR AT VERY TOP OF CARD */
+  .card-sim-bar-wrapper {
+    height: 2px;
+    width: 100%;
+    background: #E4E0D5;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-sim-bar-fill {
+    height: 100%;
+    width: 0%;
+    transition: width 0.8s ease;
+  }
+
+  .card-sim-bar-label {
+    position: absolute;
+    right: 8px;
+    top: 4px;
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    color: #AAAAAA;
+  }
+
+  .card-top-cols {
+    display: flex;
+    border-bottom: 1px solid #E4E0D5;
+  }
+
+  .card-col-half {
+    flex: 1;
+    padding: 16px;
+  }
+  .card-col-half:first-child {
+    border-right: 1px solid #E4E0D5;
+  }
+
+  .col-lbl {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    color: #AAAAAA;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+    display: block;
+    text-transform: uppercase;
+  }
+
+  .excerpt-text-heatmap {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    color: #0A0A0A;
+    line-height: 1.8;
+  }
+
+  /* TOKEN SPANS */
+  .token-span {
+    display: inline;
+    padding: 1px 3px;
+    margin: 0 1px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    line-height: 1.8;
+    border-radius: 0 !important;
+    transition: background 0.15s;
+    user-select: text;
+  }
+
+  .token-span.hot {
+    background: rgba(204, 34, 0, 0.15);
+    color: #CC2200;
+    border-bottom: 1.5px solid rgba(204, 34, 0, 0.4);
+    cursor: pointer;
+  }
+  .token-span.hot:hover {
+    background: rgba(204, 34, 0, 0.25);
+  }
+
+  .token-span.warm {
+    background: rgba(26, 107, 0, 0.12);
+    color: #1A6B00;
+    border-bottom: 1.5px solid rgba(26, 107, 0, 0.3);
+    cursor: pointer;
+  }
+  .token-span.warm:hover {
+    background: rgba(26, 107, 0, 0.2);
+  }
+
+  .token-span.cool {
+    background: rgba(0, 0, 0, 0.04);
+    color: inherit;
+  }
+
+  .token-span.cold {
+    background: transparent;
+    color: inherit;
+  }
+
+  /* MICRO STATS ROW */
+  .micro-stats-row {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: #AAAAAA;
+    padding: 6px 16px;
+    border-top: 1px solid #E4E0D5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #FAF8F5;
+  }
+
+  .card-bottom-strip {
+    background: #FFF8F8;
+    border-top: 1px solid #E4E0D5;
+    padding: 10px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .card-bottom-strip.agree-strip {
+    background: #F0F7EC;
+  }
+
+  .verdict-tag-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    padding: 3px 10px;
+    border: 1px solid;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .verdict-tag-badge.disagree {
+    background: #FFF0F0;
+    color: #CC2200;
+    border-color: rgba(204, 34, 0, 0.4);
+  }
+  .verdict-tag-badge.agree {
+    background: #F0F7EC;
+    color: #1A6B00;
+    border-color: rgba(26, 107, 0, 0.4);
+  }
+  .verdict-tag-badge.partial {
+    background: #FFF8EC;
+    color: #996600;
+    border-color: rgba(153, 102, 0, 0.4);
+  }
+
+  .verdict-reason-text {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    color: #6B6760;
+    line-height: 1.5;
+  }
+
+  /* BLIND SPOTS TAB GRID */
+  .blindspots-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .blind-col-box {
+    background: #FDFCFA;
+    border: 1px solid #D4CFC4;
+    padding: 16px;
+  }
+
+  .blind-col-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: #0A0A0A;
+    letter-spacing: 2px;
+    border-bottom: 1px solid #D4CFC4;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+  }
+
+  .blind-item {
+    padding: 10px 0;
+    border-bottom: 1px solid #E4E0D5;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    color: #0A0A0A;
+    line-height: 1.5;
+    border-left: 2px solid transparent;
+    transition: border-left-color 0.15s, padding-left 0.15s;
+  }
+  .blind-item:hover {
+    border-left-color: #1A6B00;
+    padding-left: 6px;
+  }
+
+  /* RIGHT PANEL (35%) */
+  .panel-right-summary {
+    flex: 35;
+    background: #EDEAE0;
+    border-left: 1px solid #D4CFC4;
+    padding: 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .summary-title-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    color: #AAAAAA;
+    letter-spacing: 3px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+
+  .sim-meter-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .meter-lbl {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    color: #AAAAAA;
+    letter-spacing: 1px;
+  }
+
+  .meter-bar-track {
+    width: 100%;
+    height: 8px;
+    background: #E4E0D5;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .meter-bar-fill {
+    height: 100%;
+    width: 0%;
+    transition: width 0.8s ease, background-color 0.8s ease;
+  }
+
+  .meter-score-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+    margin-top: 4px;
+  }
+
+  .meter-score-lbl {
+    font-family: 'Space Mono', monospace;
+    font-size: 7px;
+    color: #AAAAAA;
+    letter-spacing: 2px;
+  }
+
+  .panel-divider {
+    height: 1px;
+    background: #D4CFC4;
+    margin: 20px 0;
+  }
+
+  .quick-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #E4E0D5;
+    padding: 8px 0;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+  }
+  .qs-lbl { color: #AAAAAA; }
+  .qs-val { color: #0A0A0A; font-weight: 700; }
+
+  .download-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .btn-download-full {
+    background: #0A0A0A;
+    color: #F5F0E8;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    padding: 10px;
+    text-align: center;
+    letter-spacing: 2px;
+    border: none;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background-color 0.15s;
+    text-decoration: none;
+    display: block;
+  }
+  .btn-download-full:hover:not(.disabled) {
+    background: #1A6B00;
+  }
+  .btn-download-full.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .back-link {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: #6B6760;
+    text-decoration: none;
+    margin-top: 16px;
+    display: inline-block;
+    letter-spacing: 1px;
+  }
+  .back-link:hover {
+    color: #0A0A0A;
+  }
+
+  /* HOVER TOOLTIP */
+  #token-tooltip {
+    position: fixed;
+    background: #0A0A0A;
+    color: #F5F0E8;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    padding: 4px 8px;
+    border-radius: 0 !important;
+    box-shadow: 2px 2px 0px #1A6B00;
+    pointer-events: none;
+    z-index: 10000;
+    display: none;
+    white-space: nowrap;
+  }
+
+  /* PART 5 — PRINT STYLESHEET */
+  @media print {
+    body { background: white !important; color: black !important; }
+    .top-strip, .stats-row-grid, .panel-right-summary, .tab-buttons-row, nav.top-nav, footer.bottom-footer { display: none !important; }
+    .results-wrapper, .main-content-split, .panel-left-content { height: auto !important; overflow: visible !important; display: block !important; padding: 0 !important; }
+    .narrative-panel { display: block !important; page-break-inside: avoid; border: 1px solid #0A0A0A !important; box-shadow: none !important; margin-bottom: 20px !important; }
+    .narrative-collapse-btn { display: none !important; }
+    .narrative-body-container { display: flex !important; }
+    .narrative-section { page-break-inside: avoid; }
+    .res-item-card { page-break-inside: avoid; margin-bottom: 16px !important; box-shadow: none !important; border: 1px solid #0A0A0A !important; }
+    #trace-svg, #token-tooltip { display: none !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="results-wrapper">
+
+  <!-- SVG FOR TRACE LINES -->
+  <svg id="trace-svg" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999;"></svg>
+  
+  <!-- REUSABLE HOVER TOOLTIP -->
+  <div id="token-tooltip"></div>
+
+  <!-- EXAMPLE BANNER IF NO RESULTS -->
+  {% if not result %}
+    <div class="example-banner">
+      ⚠ EXAMPLE OUTPUT — Upload documents on the Analyse page to see your real results
+    </div>
+  {% endif %}
+
+  <!-- TOP STRIP -->
+  <div class="top-strip">
+    <div class="top-left-pair">
+      <span class="results-tag">RESULTS</span>
+      <span class="file-pill">
+        {% if result %}
+          {{ doc_info.a or result.doc_a.name if result.doc_a else 'DOCUMENT_01.pdf' }}
+        {% else %}
+          contract_v1.pdf
+        {% endif %}
+      </span>
+      <span class="vs-span">VS</span>
+      <span class="file-pill">
+        {% if result %}
+          {{ doc_info.b or result.doc_b.name if result.doc_b else 'DOCUMENT_02.pdf' }}
+        {% else %}
+          contract_v2.pdf
+        {% endif %}
+      </span>
+    </div>
+
+    <div class="top-actions-right">
+      <a href="{% if entry_id %}/download/json?id={{ entry_id }}{% else %}/download/json{% endif %}" class="action-btn-top {% if not result %}disabled{% endif %}">[↓ JSON]</a>
+      <a href="{% if entry_id %}/download/txt?id={{ entry_id }}{% else %}/download/txt{% endif %}" class="action-btn-top {% if not result %}disabled{% endif %}">[↓ TXT]</a>
+      <button class="action-btn-top" onclick="window.print()">[PRINT]</button>
+    </div>
+  </div>
+
+  <!-- STATS ROW (4 CARDS) -->
+  {% set c_count = (result.contradictions|length) if (result and result.contradictions) else (3 if not result else 0) %}
+  {% set a_count = (result.agreements|length) if (result and result.agreements) else (7 if not result else 0) %}
+  {% set b_count = ((result.blind_spots_a|length + result.blind_spots_b|length)) if (result and result.blind_spots_a) else (2 if not result else 0) %}
+  {% set total_chunks = (result.total_chunks_a + result.total_chunks_b) if (result and result.total_chunks_a) else (99 if not result else 0) %}
+
+  <div class="stats-row-grid">
+    <div class="res-stat-card">
+      <span class="res-stat-val" style="color:#CC2200;">{{ c_count }}</span>
+      <span class="res-stat-lbl">CONTRADICTIONS</span>
+    </div>
+    <div class="res-stat-card">
+      <span class="res-stat-val" style="color:#1A6B00;">{{ a_count }}</span>
+      <span class="res-stat-lbl">AGREEMENTS</span>
+    </div>
+    <div class="res-stat-card">
+      <span class="res-stat-val">{{ b_count }}</span>
+      <span class="res-stat-lbl">BLIND SPOTS</span>
+    </div>
+    <div class="res-stat-card">
+      <span class="res-stat-val">{{ total_chunks }}</span>
+      <span class="res-stat-lbl">CHUNKS ANALYSED</span>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT SPLIT -->
+  <div class="main-content-split">
+
+    <!-- LEFT PANEL (65%) -->
+    <div class="panel-left-content">
+
+      <!-- PART 3 — NARRATIVE REPORT SECTION -->
+      {% if result and result.narrative %}
+        <div class="narrative-panel">
+          <div class="narrative-top-bar">
+            <span class="narrative-title-tag">ANALYSIS NARRATIVE</span>
+            <button class="narrative-collapse-btn" onclick="toggleNarrativeBody(this)">[COLLAPSE ▲]</button>
+          </div>
+
+          <div class="narrative-body-container" id="narrative-container">
+            {% if result.narrative.generated and result.narrative.sections %}
+              {% set sections = result.narrative.sections %}
+              {% for section_name, section_color in [
+                ('DOCUMENT OVERVIEW', '#0A0A0A'),
+                ('KEY FINDINGS', '#1A6B00'),
+                ('CONTRADICTIONS ANALYSIS', '#CC2200'),
+                ('AGREEMENTS ANALYSIS', '#1A6B00'),
+                ('BLIND SPOTS', '#996600'),
+                ('CONCLUSION', '#0A0A0A')
+              ] %}
+                {% if sections[section_name] %}
+                <div class="narrative-section">
+                  <div class="narrative-label" style="border-left-color: {{ section_color }}; color: {{ section_color }}">
+                    {{ section_name }}
+                  </div>
+                  <div class="narrative-body-text">{{ sections[section_name] }}</div>
+                </div>
+                {% endif %}
+              {% endfor %}
+            {% else %}
+              <div class="narrative-error-row">
+                Narrative unavailable — {{ result.narrative.error if result.narrative.error else 'Failed to generate narrative report.' }}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="tab-buttons-row">
+        <button class="tab-btn active" onclick="switchTab('tab-contradictions', this)">CONTRADICTIONS ({{ c_count }})</button>
+        <button class="tab-btn" onclick="switchTab('tab-agreements', this)">AGREEMENTS ({{ a_count }})</button>
+        <button class="tab-btn" onclick="switchTab('tab-blindspots', this)">BLIND SPOTS ({{ b_count }})</button>
+      </div>
+
+      <!-- TAB CONTENT — CONTRADICTIONS -->
+      <div class="tab-pane active" id="tab-contradictions">
+        {% if result and result.contradictions %}
+          {% for item in result.contradictions %}
+            <div class="res-item-card" 
+                 data-chunk-a="{{ (item.chunk_a or item.text_a)|e }}" 
+                 data-chunk-b="{{ (item.chunk_b or item.text_b)|e }}" 
+                 data-score="{{ item.score if item.score is defined else 0.25 }}" 
+                 data-card-index="c-{{ loop.index }}">
+              
+              <!-- INTENSITY BAR -->
+              <div class="card-sim-bar-wrapper">
+                <div class="card-sim-bar-fill"></div>
+              </div>
+              <span class="card-sim-bar-label">SCORE: {{ item.score if item.score is defined else 0.25 }}</span>
+
+              <div class="card-top-cols">
+                <div class="card-col-half">
+                  <span class="col-lbl">DOC A</span>
+                  <div class="excerpt-text-heatmap col-a-target"></div>
+                </div>
+                <div class="card-col-half">
+                  <span class="col-lbl">DOC B</span>
+                  <div class="excerpt-text-heatmap col-b-target"></div>
+                </div>
+              </div>
+
+              <!-- MICRO STATS ROW -->
+              <div class="micro-stats-row">
+                <span class="stat-doc-a-text">DOC A: 0 words</span>
+                <span class="stat-shared-text">0 shared terms</span>
+                <span class="stat-doc-b-text">DOC B: 0 words</span>
+              </div>
+
+              <div class="card-bottom-strip">
+                <span class="verdict-tag-badge disagree">DISAGREE</span>
+                <span class="verdict-reason-text">{{ item.reason or 'Excerpts contain opposing numerical values or semantic statements.' }}</span>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <!-- FAKE EXAMPLE CARDS IF NO RESULTS -->
+          <div class="res-item-card" 
+               data-chunk-a="The employee shall provide thirty (30) days written notice prior to termination of employment." 
+               data-chunk-b="A minimum notice period of fourteen (14) days is required from either party." 
+               data-score="0.22" 
+               data-card-index="c-ex-1">
+            
+            <div class="card-sim-bar-wrapper">
+              <div class="card-sim-bar-fill"></div>
+            </div>
+            <span class="card-sim-bar-label">SCORE: 0.22</span>
+
+            <div class="card-top-cols">
+              <div class="card-col-half">
+                <span class="col-lbl">DOC A</span>
+                <div class="excerpt-text-heatmap col-a-target"></div>
+              </div>
+              <div class="card-col-half">
+                <span class="col-lbl">DOC B</span>
+                <div class="excerpt-text-heatmap col-b-target"></div>
+              </div>
+            </div>
+
+            <div class="micro-stats-row">
+              <span class="stat-doc-a-text">DOC A: 0 words</span>
+              <span class="stat-shared-text">0 shared terms</span>
+              <span class="stat-doc-b-text">DOC B: 0 words</span>
+            </div>
+
+            <div class="card-bottom-strip">
+              <span class="verdict-tag-badge disagree">DISAGREE</span>
+              <span class="verdict-reason-text">Notice period differs: 30 days in Doc A versus 14 days in Doc B.</span>
+            </div>
+          </div>
+
+          <div class="res-item-card" 
+               data-chunk-a="Compensation shall be reviewed annually at the discretion of management." 
+               data-chunk-b="Performance-based salary reviews occur bi-annually, subject to company performance." 
+               data-score="0.45" 
+               data-card-index="c-ex-2">
+            
+            <div class="card-sim-bar-wrapper">
+              <div class="card-sim-bar-fill"></div>
+            </div>
+            <span class="card-sim-bar-label">SCORE: 0.45</span>
+
+            <div class="card-top-cols">
+              <div class="card-col-half">
+                <span class="col-lbl">DOC A</span>
+                <div class="excerpt-text-heatmap col-a-target"></div>
+              </div>
+              <div class="card-col-half">
+                <span class="col-lbl">DOC B</span>
+                <div class="excerpt-text-heatmap col-b-target"></div>
+              </div>
+            </div>
+
+            <div class="micro-stats-row">
+              <span class="stat-doc-a-text">DOC A: 0 words</span>
+              <span class="stat-shared-text">0 shared terms</span>
+              <span class="stat-doc-b-text">DOC B: 0 words</span>
+            </div>
+
+            <div class="card-bottom-strip">
+              <span class="verdict-tag-badge partial">PARTIALLY AGREE</span>
+              <span class="verdict-reason-text">Both mention salary reviews but differ on frequency and criteria.</span>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- TAB CONTENT — AGREEMENTS -->
+      <div class="tab-pane" id="tab-agreements">
+        {% if result and result.agreements %}
+          {% for item in result.agreements %}
+            <div class="res-item-card" 
+                 data-chunk-a="{{ (item.chunk_a or item.text_a)|e }}" 
+                 data-chunk-b="{{ (item.chunk_b or item.text_b)|e }}" 
+                 data-score="{{ item.score if item.score is defined else 0.78 }}" 
+                 data-card-index="a-{{ loop.index }}">
+              
+              <div class="card-sim-bar-wrapper">
+                <div class="card-sim-bar-fill"></div>
+              </div>
+              <span class="card-sim-bar-label">SCORE: {{ item.score if item.score is defined else 0.78 }}</span>
+
+              <div class="card-top-cols">
+                <div class="card-col-half">
+                  <span class="col-lbl">DOC A</span>
+                  <div class="excerpt-text-heatmap col-a-target"></div>
+                </div>
+                <div class="card-col-half">
+                  <span class="col-lbl">DOC B</span>
+                  <div class="excerpt-text-heatmap col-b-target"></div>
+                </div>
+              </div>
+
+              <div class="micro-stats-row">
+                <span class="stat-doc-a-text">DOC A: 0 words</span>
+                <span class="stat-shared-text">0 shared terms</span>
+                <span class="stat-doc-b-text">DOC B: 0 words</span>
+              </div>
+
+              <div class="card-bottom-strip agree-strip">
+                <span class="verdict-tag-badge agree">AGREE</span>
+                <span class="verdict-reason-text">{{ item.reason or 'Excerpts confirm matching specifications and factual details.' }}</span>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <!-- FAKE EXAMPLE AGREEMENT -->
+          <div class="res-item-card" 
+               data-chunk-a="All confidential information remains the property of the company upon termination." 
+               data-chunk-b="Proprietary information and trade secrets revert to company ownership upon contract end." 
+               data-score="0.82" 
+               data-card-index="a-ex-1">
+            
+            <div class="card-sim-bar-wrapper">
+              <div class="card-sim-bar-fill"></div>
+            </div>
+            <span class="card-sim-bar-label">SCORE: 0.82</span>
+
+            <div class="card-top-cols">
+              <div class="card-col-half">
+                <span class="col-lbl">DOC A</span>
+                <div class="excerpt-text-heatmap col-a-target"></div>
+              </div>
+              <div class="card-col-half">
+                <span class="col-lbl">DOC B</span>
+                <div class="excerpt-text-heatmap col-b-target"></div>
+              </div>
+            </div>
+
+            <div class="micro-stats-row">
+              <span class="stat-doc-a-text">DOC A: 0 words</span>
+              <span class="stat-shared-text">0 shared terms</span>
+              <span class="stat-doc-b-text">DOC B: 0 words</span>
+            </div>
+
+            <div class="card-bottom-strip agree-strip">
+              <span class="verdict-tag-badge agree">AGREE</span>
+              <span class="verdict-reason-text">Both documents align on confidentiality and IP ownership post-termination.</span>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- TAB CONTENT — BLIND SPOTS -->
+      <div class="tab-pane" id="tab-blindspots">
+        <div class="blindspots-2col">
+          <div class="blind-col-box">
+            <div class="blind-col-title">ONLY IN DOC A</div>
+            {% if result and result.blind_spots_a %}
+              {% for snippet in result.blind_spots_a %}
+                <div class="blind-item">{{ snippet }}</div>
+              {% endfor %}
+            {% else %}
+              <div class="blind-item">Section 14.2: Mandatory Arbitration in Delaware Jurisdiction</div>
+              <div class="blind-item">Schedule C: Intellectual Property Assignment Clause</div>
+            {% endif %}
+          </div>
+
+          <div class="blind-col-box">
+            <div class="blind-col-title">ONLY IN DOC B</div>
+            {% if result and result.blind_spots_b %}
+              {% for snippet in result.blind_spots_b %}
+                <div class="blind-item">{{ snippet }}</div>
+              {% endfor %}
+            {% else %}
+              <div class="blind-item">Appendix B: Remote Work & Equipment Allowance Policy</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT PANEL (35%) -->
+    <div class="panel-right-summary">
+      <div class="summary-title-tag">ANALYSIS SUMMARY</div>
+
+      {% set score_pct = 43 if not result else (result.overall_similarity if result.overall_similarity is defined else 72) %}
+
+      <div class="sim-meter-box">
+        <span class="meter-lbl">DOCUMENT SIMILARITY</span>
+        <div class="meter-bar-track">
+          <div class="meter-bar-fill" id="meter-fill" data-pct="{{ score_pct }}"></div>
+        </div>
+        <div class="meter-score-num" id="meter-score-text">0%</div>
+        <span class="meter-score-lbl">SIMILARITY INDEX</span>
+        {% if result and result.score_range %}
+          <div style="font-family: 'Space Mono', monospace; font-size: 9px; color: #6B6760; margin-top: 4px;">
+            MATCH RANGE: {{ result.score_range.min }}% — {{ result.score_range.max }}%
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="panel-divider"></div>
+
+      <!-- QUICK STATS LIST -->
+      <div class="quick-stat-row">
+        <span class="qs-lbl">DOC A CHUNKS</span>
+        <span class="qs-val">{{ result.total_chunks_a if (result and result.total_chunks_a) else 47 }}</span>
+      </div>
+
+      <div class="quick-stat-row">
+        <span class="qs-lbl">DOC B CHUNKS</span>
+        <span class="qs-val">{{ result.total_chunks_b if (result and result.total_chunks_b) else 52 }}</span>
+      </div>
+
+      <div class="quick-stat-row">
+        <span class="qs-lbl">FURTHEST MATCH</span>
+        <span class="qs-val">{% if result and result.score_range %}{{ result.score_range.min }}%{% else %}12.0%{% endif %}</span>
+      </div>
+
+      <div class="quick-stat-row">
+        <span class="qs-lbl">CLOSEST MATCH</span>
+        <span class="qs-val">{% if result and result.score_range %}{{ result.score_range.max }}%{% else %}89.0%{% endif %}</span>
+      </div>
+
+      <div class="panel-divider"></div>
+
+      <!-- DOWNLOAD SECTION -->
+      <div class="summary-title-tag" style="margin-bottom:12px;">DOWNLOAD RESULTS</div>
+      <div class="download-section">
+        <a href="{% if entry_id %}/download/json?id={{ entry_id }}{% else %}/download/json{% endif %}" class="btn-download-full {% if not result %}disabled{% endif %}">[DOWNLOAD AS JSON ↓]</a>
+        <a href="{% if entry_id %}/download/txt?id={{ entry_id }}{% else %}/download/txt{% endif %}" class="btn-download-full {% if not result %}disabled{% endif %}">[DOWNLOAD AS TXT ↓]</a>
+      </div>
+
+      <a href="/dashboard" class="back-link">[← RUN ANOTHER ANALYSIS]</a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // TAB SWITCHING
+  function switchTab(tabId, btnEl) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+    document.getElementById(tabId).classList.add('active');
+    btnEl.classList.add('active');
+    clearTraceLine();
+  }
+
+  // NARRATIVE TOGGLE
+  function toggleNarrativeBody(btn) {
+    const container = document.getElementById('narrative-container');
+    if (!container) return;
+    if (container.style.display === 'none') {
+      container.style.display = 'flex';
+      btn.textContent = '[COLLAPSE ▲]';
+    } else {
+      container.style.display = 'none';
+      btn.textContent = '[EXPAND ▼]';
+    }
+  }
+
+  // --- TOKEN ATTENTION HEATMAP COMPONENT ---
+  const STOPWORDS = new Set([
+    "the","a","an","and","or","but","in","on","at","to","for",
+    "of","with","by","from","is","are","was","were","be","been",
+    "has","have","had","will","would","could","should","may","might",
+    "this","that","these","those","it","its","as","not","no","so"
+  ]);
+
+  function normalizeWord(w) {
+    return w.toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+
+  function renderHeatmapTokens(text, side, cardIndex, otherText) {
+    const wordsSelf = text.split(/\s+/);
+    const wordsOther = otherText.split(/\s+/);
+
+    const otherNormalizedSet = new Set(
+      wordsOther.map(w => normalizeWord(w)).filter(w => w.length > 0)
+    );
+
+    let html = '';
+
+    wordsSelf.forEach((w, idx) => {
+      if (!w) return;
+      const norm = normalizeWord(w);
+      let category = "cold";
+
+      if (norm.length > 0) {
+        const isStopword = STOPWORDS.has(norm);
+        const isShared = otherNormalizedSet.has(norm);
+
+        if (isShared && !isStopword) {
+          category = "hot";
+        } else if (!isShared && !isStopword && norm.length > 4) {
+          category = "warm";
+        } else if (isShared && isStopword) {
+          category = "cool";
+        }
+      }
+
+      html += `<span class="token-span ${category}" data-word="${norm}" data-side="${side}" data-card="${cardIndex}">${w}</span> `;
+    });
+
+    return html;
+  }
+
+  // INITIALIZE HEATMAPS & SIMILARITY INTENSITY BARS
+  document.addEventListener('DOMContentLoaded', () => {
+    const cards = document.querySelectorAll('.res-item-card');
+
+    cards.forEach(card => {
+      const textA = card.getAttribute('data-chunk-a') || '';
+      const textB = card.getAttribute('data-chunk-b') || '';
+      const scoreVal = parseFloat(card.getAttribute('data-score') || '0.5');
+      const cardIdx = card.getAttribute('data-card-index') || 'card';
+
+      // Render Heatmaps into target elements
+      const targetA = card.querySelector('.col-a-target');
+      const targetB = card.querySelector('.col-b-target');
+
+      if (targetA) targetA.innerHTML = renderHeatmapTokens(textA, 'a', cardIdx, textB);
+      if (targetB) targetB.innerHTML = renderHeatmapTokens(textB, 'b', cardIdx, textA);
+
+      // Similarity Intensity Bar
+      const barFill = card.querySelector('.card-sim-bar-fill');
+      if (barFill) {
+        let pctWidth = 30;
+        let barColor = '#1A6B00';
+        if (scoreVal < 0.3) {
+          pctWidth = 90;
+          barColor = '#CC2200';
+        } else if (scoreVal <= 0.5) {
+          pctWidth = 60;
+          barColor = '#996600';
+        }
+        barFill.style.backgroundColor = barColor;
+        setTimeout(() => {
+          barFill.style.width = pctWidth + '%';
+        }, 100);
+      }
+
+      // Micro Stats
+      const wordsA = textA.split(/\s+/).filter(w => w.length > 0);
+      const wordsB = textB.split(/\s+/).filter(w => w.length > 0);
+      const setA = new Set(wordsA.map(w => normalizeWord(w)).filter(w => w.length > 0 && !STOPWORDS.has(w)));
+      const setB = new Set(wordsB.map(w => normalizeWord(w)).filter(w => w.length > 0 && !STOPWORDS.has(w)));
+
+      let sharedCount = 0;
+      setA.forEach(w => { if (setB.has(w)) sharedCount++; });
+
+      const statAEl = card.querySelector('.stat-doc-a-text');
+      const statBEl = card.querySelector('.stat-doc-b-text');
+      const statSharedEl = card.querySelector('.stat-shared-text');
+
+      if (statAEl) statAEl.textContent = `DOC A: ${wordsA.length} words, ${setA.size} unique`;
+      if (statBEl) statBEl.textContent = `DOC B: ${wordsB.length} words, ${setB.size} unique`;
+      if (statSharedEl) statSharedEl.textContent = `${sharedCount} shared terms`;
+    });
+
+    setupHoverTooltips();
+    setupTraceLineClicks();
+  });
+
+  // HOVER TOOLTIP SYSTEM
+  function setupHoverTooltips() {
+    const tooltip = document.getElementById('token-tooltip');
+
+    document.addEventListener('mouseover', (e) => {
+      const span = e.target.closest('.token-span');
+      if (!span) {
+        tooltip.style.display = 'none';
+        return;
+      }
+
+      if (span.classList.contains('hot')) {
+        tooltip.textContent = "SHARED TERM — appears in both documents";
+        tooltip.style.boxShadow = "2px 2px 0px #CC2200";
+        positionTooltip(span);
+      } else if (span.classList.contains('warm')) {
+        tooltip.textContent = "UNIQUE TO THIS DOCUMENT";
+        tooltip.style.boxShadow = "2px 2px 0px #1A6B00";
+        positionTooltip(span);
+      } else {
+        tooltip.style.display = 'none';
+      }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+      if (e.target.closest('.token-span')) {
+        tooltip.style.display = 'none';
+      }
+    });
+
+    function positionTooltip(span) {
+      const rect = span.getBoundingClientRect();
+      tooltip.style.display = 'block';
+      const ttRect = tooltip.getBoundingClientRect();
+
+      tooltip.style.left = (rect.left + rect.width / 2 - ttRect.width / 2) + 'px';
+      tooltip.style.top = (rect.top - ttRect.height - 6) + 'px';
+    }
+  }
+
+  // TRACE LINE FEATURE (SVG)
+  function setupTraceLineClicks() {
+    document.addEventListener('click', (e) => {
+      const hotSpan = e.target.closest('.token-span.hot');
+
+      if (!hotSpan) {
+        clearTraceLine();
+        return;
+      }
+
+      const side = hotSpan.getAttribute('data-side');
+      const word = hotSpan.getAttribute('data-word');
+      const cardIdx = hotSpan.getAttribute('data-card');
+
+      if (side !== 'a') {
+        clearTraceLine();
+        return;
+      }
+
+      // Find matching span in side B of same card
+      const targetB = document.querySelector(`.token-span.hot[data-word="${word}"][data-side="b"][data-card="${cardIdx}"]`);
+      if (!targetB) return;
+
+      drawTraceLine(hotSpan, targetB);
+    });
+  }
+
+  function drawTraceLine(spanA, spanB) {
+    const svg = document.getElementById('trace-svg');
+    svg.innerHTML = '';
+
+    const rectA = spanA.getBoundingClientRect();
+    const rectB = spanB.getBoundingClientRect();
+
+    const x1 = rectA.right;
+    const y1 = rectA.top + rectA.height / 2;
+    const x2 = rectB.left;
+    const y2 = rectB.top + rectB.height / 2;
+
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const lineLen = Math.sqrt(dx * dx + dy * dy);
+
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', x1);
+    line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2);
+    line.setAttribute('y2', y2);
+    line.setAttribute('stroke', '#CC2200');
+    line.setAttribute('stroke-width', '1.5');
+    line.setAttribute('stroke-dasharray', '4 3');
+    line.setAttribute('opacity', '0.7');
+    line.setAttribute('stroke-dashoffset', lineLen);
+
+    svg.appendChild(line);
+
+    // Animate line draw in
+    let start = null;
+    function animLine(timestamp) {
+      if (!start) start = timestamp;
+      const progress = timestamp - start;
+      const offset = Math.max(0, lineLen * (1 - progress / 400));
+      line.setAttribute('stroke-dashoffset', offset);
+
+      if (progress < 400) {
+        requestAnimationFrame(animLine);
+      } else {
+        line.setAttribute('stroke-dashoffset', '0');
+      }
+    }
+    requestAnimationFrame(animLine);
+  }
+
+  function clearTraceLine() {
+    const svg = document.getElementById('trace-svg');
+    if (svg) svg.innerHTML = '';
+  }
+
+  // SIMILARITY METER ANIMATION (RIGHT PANEL)
+  (function() {
+    const meterFill = document.getElementById('meter-fill');
+    const scoreText = document.getElementById('meter-score-text');
+    if (!meterFill || !scoreText) return;
+
+    const targetPct = parseInt(meterFill.getAttribute('data-pct') || '43');
+    let color = '#CC2200';
+    if (targetPct > 70) color = '#1A6B00';
+    else if (targetPct >= 40) color = '#996600';
+
+    meterFill.style.backgroundColor = color;
+    scoreText.style.color = color;
+
+    let start = null;
+    function animateMeter(timestamp) {
+      if (!start) start = timestamp;
+      const progress = timestamp - start;
+      const pct = Math.min(targetPct, Math.floor((progress / 800) * targetPct));
+      
+      meterFill.style.width = pct + '%';
+      scoreText.textContent = pct + '%';
+
+      if (progress < 800) {
+        requestAnimationFrame(animateMeter);
+      } else {
+        meterFill.style.width = targetPct + '%';
+        scoreText.textContent = targetPct + '%';
+      }
+    }
+
+    requestAnimationFrame(animateMeter);
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAE — Data Analyser Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      border-radius: 0 !important;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #F5F0E8;
+      color: #0A0A0A;
+      font-family: 'Space Grotesk', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #EDEAE0;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #D4CFC4;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #1A6B00;
+    }
+
+    /* TOP BAR */
+    header.top-bar {
+      height: 48px;
+      background: #FDFCFA;
+      border-bottom: 1px solid #D4CFC4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    .top-left {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: #1A6B00;
+      letter-spacing: 6px;
+      padding-left: 20px;
+      font-weight: 700;
+    }
+
+    .top-center {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: #6B6760;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    .top-right {
+      padding-right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .clock {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: #1A6B00;
+      letter-spacing: 1px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      background-color: #1A6B00;
+      animation: blink 1.2s infinite ease-in-out;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .status-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: #6B6760;
+      letter-spacing: 2px;
+    }
+
+    /* MIDDLE ROW */
+    .middle-row {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* LEFT SIDEBAR */
+    aside.left-sidebar {
+      width: 320px;
+      min-width: 320px;
+      background: #EDEAE0;
+      border-right: 1px solid #D4CFC4;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      color: #6B6760;
+      letter-spacing: 3px;
+      padding: 16px 20px 8px;
+      display: block;
+      text-transform: uppercase;
+    }
+
+    .section-block {
+      border-bottom: 1px solid #D4CFC4;
+    }
+
+    /* SECTION 01 — UPLOAD */
+    .upload-zone {
+      height: 72px;
+      margin: 0 16px 8px;
+      background: #F5F0E8;
+      border: 1px dashed #C4BFB4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 4px;
+      cursor: pointer;
+      transition: border-color 0.15s, background-color 0.15s;
+      position: relative;
+      user-select: none;
+      padding: 4px;
+    }
+    .upload-zone:last-of-type {
+      margin-bottom: 16px;
+    }
+    .upload-zone.dragover, .upload-zone:hover {
+      border-color: #1A6B00;
+      background: #F0F7EC;
+    }
+    .upload-zone.has-file {
+      border-style: solid;
+      border-color: #1A6B00;
+      background: #F0F7EC;
+    }
+
+    .upload-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: #C4BFB4;
+      max-width: 90%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+    }
+    .upload-zone.has-file .upload-title {
+      color: #1A6B00;
+      font-weight: 700;
+    }
+
+    .upload-subtitle {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      color: #D4CFC4;
+    }
+    .upload-zone.has-file .upload-subtitle {
+      color: #6B6760;
+    }
+
+    .clear-file-btn {
+      position: absolute;
+      top: 4px;
+      right: 6px;
+      background: none;
+      border: none;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: #6B6760;
+      cursor: pointer;
+      display: none;
+    }
+    .upload-zone.has-file .clear-file-btn {
+      display: block;
+    }
+    .clear-file-btn:hover {
+      color: #CC2200;
+    }
+
+    /* SECTION 02 — PARAMS */
+    .toggle-row {
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #E4E0D5;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-row-label {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 12px;
+      color: #0A0A0A;
+    }
+
+    .square-toggle {
+      width: 32px;
+      height: 16px;
+      background: #D4CFC4;
+      border: 1px solid #C4BFB4;
+      position: relative;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+    .toggle-thumb {
+      width: 12px;
+      height: 12px;
+      background: #6B6760;
+      position: absolute;
+      top: 1px;
+      left: 1px;
+      transition: left 0.15s, background-color 0.15s;
+    }
+
+    .toggle-row.active .square-toggle {
+      background: #C8FF00;
+      border-color: #1A6B00;
+    }
+    .toggle-row.active .toggle-thumb {
+      left: 17px;
+      background: #1A6B00;
+    }
+
+    .sensitivity-row {
+      padding: 10px 20px 16px;
+    }
+    .sensitivity-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .sensitivity-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      color: #6B6760;
+      letter-spacing: 1px;
+    }
+    .sensitivity-val {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: #1A6B00;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 1px;
+      background: #C4BFB4;
+      outline: none;
+      margin: 6px 0;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 10px;
+      height: 10px;
+      background: #1A6B00;
+      border-radius: 0;
+      cursor: pointer;
+      border: none;
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 10px;
+      height: 10px;
+      background: #1A6B00;
+      border-radius: 0;
+      cursor: pointer;
+      border: none;
+    }
+
+    /* SECTION 03 — RUN ANALYSIS */
+    .analyse-container {
+      padding: 16px;
+      border-bottom: 1px solid #D4CFC4;
+    }
+
+    .btn-run {
+      width: 100%;
+      height: 48px;
+      background: #E4E0D5;
+      color: #C4BFB4;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 3px;
+      border: none;
+      cursor: not-allowed;
+      text-transform: uppercase;
+      font-weight: 700;
+      transition: background-color 0.15s, color 0.15s;
+    }
+    .btn-run.ready {
+      background: #0A0A0A;
+      color: #C8FF00;
+      cursor: pointer;
+    }
+    .btn-run.ready:hover {
+      background: #1A1A1A;
+    }
+
+    .btn-hint {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      color: #6B6760;
+      text-align: center;
+      margin-top: 8px;
+      letter-spacing: 1px;
+    }
+
+    /* SECTION 04 — RECENT */
+    .history-row {
+      padding: 12px 20px;
+      border-bottom: 1px solid #E4E0D5;
+      cursor: pointer;
+      border-left: 2px solid transparent;
+      transition: background-color 0.15s, border-left-color 0.15s;
+    }
+    .history-row:hover {
+      background: #E4E0D5;
+      border-left-color: #1A6B00;
+    }
+    .history-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+    .history-pair {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px;
+      color: #0A0A0A;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+    }
+    .history-score {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .history-time {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      color: #6B6760;
+    }
+
+    /* SECTION 05 — SESSION STATS */
+    .stats-grid {
+      padding: 16px 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    .stat-box {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .stat-val {
+      font-family: 'Space Mono', monospace;
+      font-size: 20px;
+      color: #0A0A0A;
+      font-weight: 500;
+      line-height: 1;
+    }
+    .stat-lbl {
+      font-family: 'Space Mono', monospace;
+      font-size: 7px;
+      color: #6B6760;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* RIGHT CANVAS AREA */
+    .canvas-area {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: #F5F0E8;
+    }
+
+    #main-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .fullscreen-overlay {
+      position: fixed !important;
+      top: 0;
+      left: 0;
+      width: 100vw !important;
+      height: 100vh !important;
+      z-index: 9999;
+    }
+
+    /* BOTTOM BAR */
+    footer.bottom-bar {
+      height: 44px;
+      background: #FDFCFA;
+      border-top: 1px solid #D4CFC4;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 12px;
+      justify-content: space-between;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    .fps-counter {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: #6B6760;
+    }
+
+    .controls-center {
+      display: flex;
+      gap: 8px;
+    }
+
+    .ctrl-btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      padding: 6px 14px;
+      background: transparent;
+      border: 1px solid #C4BFB4;
+      color: #6B6760;
+      cursor: pointer;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .ctrl-btn:hover {
+      border-color: #0A0A0A;
+      color: #0A0A0A;
+    }
+
+    .version-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: #C4BFB4;
+    }
+  </style>
+</head>
+<body>
+  <!-- TOP BAR -->
+  <header class="top-bar">
+    <div class="top-left">[ DAE ]</div>
+    <div class="top-center">DATA ANALYSER ENGINE</div>
+    <div class="top-right">
+      <div class="clock" id="clock">00:00:00</div>
+      <div class="status-dot"></div>
+      <div class="status-label">READY</div>
+    </div>
+  </header>
+
+  <!-- MIDDLE ROW -->
+  <div class="middle-row">
+    <!-- LEFT SIDEBAR -->
+    <aside class="left-sidebar">
+      <!-- SECTION 01 — LOAD DOCUMENTS -->
+      <div class="section-block">
+        <span class="section-label">01 / LOAD DOCUMENTS</span>
+
+        <div class="upload-zone" id="zone-1" data-slot="1">
+          <button class="clear-file-btn" data-slot="1">✕</button>
+          <div class="upload-title" id="title-1">DOCUMENT 01</div>
+          <div class="upload-subtitle" id="sub-1">DROP PDF OR CLICK</div>
+        </div>
+        <input type="file" id="file-1" accept=".pdf" style="display:none">
+
+        <div class="upload-zone" id="zone-2" data-slot="2">
+          <button class="clear-file-btn" data-slot="2">✕</button>
+          <div class="upload-title" id="title-2">DOCUMENT 02</div>
+          <div class="upload-subtitle" id="sub-2">DROP PDF OR CLICK</div>
+        </div>
+        <input type="file" id="file-2" accept=".pdf" style="display:none">
+      </div>
+
+      <!-- SECTION 02 — ANALYSIS PARAMS -->
+      <div class="section-block">
+        <span class="section-label">02 / ANALYSIS PARAMS</span>
+
+        <div class="toggle-row active" id="toggle-deep">
+          <span class="toggle-row-label">DEEP SCAN</span>
+          <div class="square-toggle"><div class="toggle-thumb"></div></div>
+        </div>
+
+        <div class="toggle-row" id="toggle-meta">
+          <span class="toggle-row-label">EXTRACT METADATA</span>
+          <div class="square-toggle"><div class="toggle-thumb"></div></div>
+        </div>
+
+        <div class="toggle-row active" id="toggle-diff">
+          <span class="toggle-row-label">SENTENCE DIFF</span>
+          <div class="square-toggle"><div class="toggle-thumb"></div></div>
+        </div>
+
+        <div class="toggle-row" id="toggle-map">
+          <span class="toggle-row-label">KEYWORD MAP</span>
+          <div class="square-toggle"><div class="toggle-thumb"></div></div>
+        </div>
+
+        <div class="sensitivity-row">
+          <div class="sensitivity-header">
+            <span class="sensitivity-title">SENSITIVITY</span>
+            <span class="sensitivity-val" id="sensitivity-val">85%</span>
+          </div>
+          <input type="range" id="sensitivity-range" min="10" max="100" value="85">
+        </div>
+      </div>
+
+      <!-- SECTION 03 — RUN ANALYSIS -->
+      <div class="analyse-container">
+        <button class="btn-run" id="btn-run" disabled>RUN ANALYSIS</button>
+        <div class="btn-hint" id="btn-hint">SELECT BOTH DOCUMENTS TO ENABLE</div>
+      </div>
+
+      <!-- SECTION 04 — RECENT -->
+      <div class="section-block">
+        <span class="section-label">03 / RECENT</span>
+        <div id="history-list">
+          <div class="history-row" data-pair="report_q3.pdf vs budget.pdf" data-score="94">
+            <div class="history-top">
+              <span class="history-pair">report_q3.pdf vs budget.pdf</span>
+              <span class="history-score" style="color: #1A6B00;">94%</span>
+            </div>
+            <div class="history-time">2h ago</div>
+          </div>
+
+          <div class="history-row" data-pair="contract_v2.pdf vs contract_v1.pdf" data-score="71">
+            <div class="history-top">
+              <span class="history-pair">contract_v2.pdf vs contract_v1.pdf</span>
+              <span class="history-score" style="color: #1A6B00;">71%</span>
+            </div>
+            <div class="history-time">Yesterday</div>
+          </div>
+
+          <div class="history-row" data-pair="thesis.pdf vs reference.pdf" data-score="43">
+            <div class="history-top">
+              <span class="history-pair">thesis.pdf vs reference.pdf</span>
+              <span class="history-score" style="color: #B87000;">43%</span>
+            </div>
+            <div class="history-time">3d ago</div>
+          </div>
+
+          <div class="history-row" data-pair="specification.pdf vs manual.pdf" data-score="88">
+            <div class="history-top">
+              <span class="history-pair">specification.pdf vs manual.pdf</span>
+              <span class="history-score" style="color: #1A6B00;">88%</span>
+            </div>
+            <div class="history-time">5d ago</div>
+          </div>
+
+          <div class="history-row" data-pair="annual_report.pdf vs forecast.pdf" data-score="62">
+            <div class="history-top">
+              <span class="history-pair">annual_report.pdf vs forecast.pdf</span>
+              <span class="history-score" style="color: #B87000;">62%</span>
+            </div>
+            <div class="history-time">1w ago</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 05 — SESSION STATS -->
+      <div class="section-block">
+        <span class="section-label">04 / SESSION</span>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <span class="stat-val" id="stat-docs">0</span>
+            <span class="stat-lbl">DOCS LOADED</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-val" id="stat-runs">0</span>
+            <span class="stat-lbl">ANALYSES RUN</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-val" id="stat-avg">—</span>
+            <span class="stat-lbl">AVG SIMILARITY</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT CANVAS AREA -->
+    <section class="canvas-area" id="canvas-area">
+      <canvas id="main-canvas"></canvas>
+    </section>
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <footer class="bottom-bar">
+    <div class="fps-counter" id="fps-display">60 FPS</div>
+    <div class="controls-center">
+      <button class="ctrl-btn" id="btn-reset">[RESET]</button>
+      <button class="ctrl-btn" id="btn-export">[EXPORT PNG]</button>
+      <button class="ctrl-btn" id="btn-fullscreen">[FULLSCREEN]</button>
+    </div>
+    <div class="version-tag">DAE v2.0</div>
+  </footer>
+
+  <script>
+    // --- STATE ENGINE ---
+    const STATE_IDLE = 1;
+    const STATE_FILES_LOADED = 2;
+    const STATE_ANALYSING = 3;
+    const STATE_RESULTS = 4;
+
+    let currentState = STATE_IDLE;
+    let file1 = null;
+    let file2 = null;
+
+    let stats = {
+      docsLoaded: 0,
+      analysesRun: 0,
+      scores: []
+    };
+
+    // --- PRE-BAKED VALUE NOISE IMPLEMENTATION ---
+    const PERM = new Uint8Array(512);
+    const P_BASE = [
+      151,160,137,91,90,15,131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,
+      8,99,37,240,21,10,23,190,6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,
+      35,11,32,57,177,33,88,237,149,56,87,174,20,125,136,171,168,68,175,74,165,71,
+      134,139,48,27,166,77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,
+      55,46,245,40,244,102,143,54,65,25,63,161,1,216,80,73,209,76,132,187,208,89,
+      18,169,200,196,135,130,116,188,159,86,164,100,109,198,173,186,3,64,52,217,
+      226,250,124,123,5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,
+      17,182,189,28,42,223,183,170,213,119,248,152,2,44,154,163,70,221,153,101,
+      155,167,43,172,9,129,22,39,253,19,98,108,110,79,113,224,232,178,185,112,104,
+      218,246,97,228,251,34,242,193,238,210,144,12,191,179,162,241,81,51,145,235,
+      249,14,239,107,49,192,214,31,181,199,106,157,184,84,204,176,115,121,50,45,
+      127,4,150,254,138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,
+      61,156,180
+    ];
+    for (let i = 0; i < 256; i++) {
+      PERM[i] = P_BASE[i];
+      PERM[i + 256] = P_BASE[i];
+    }
+    function fade(t) { return t * t * t * (t * (t * 6 - 15) + 10); }
+    function lerp(t, a, b) { return a + t * (b - a); }
+    function grad(hash, x, y) {
+      const h = hash & 7;
+      const u = h < 4 ? x : y;
+      const v = h < 4 ? y : x;
+      return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
+    }
+    function noise2D(x, y) {
+      const X = Math.floor(x) & 255;
+      const Y = Math.floor(y) & 255;
+      const xf = x - Math.floor(x);
+      const yf = y - Math.floor(y);
+      const u = fade(xf);
+      const v = fade(yf);
+      const A = PERM[X] + Y;
+      const B = PERM[X + 1] + Y;
+      return lerp(v,
+        lerp(u, grad(PERM[A], xf, yf), grad(PERM[B], xf - 1, yf)),
+        lerp(u, grad(PERM[A + 1], xf, yf - 1), grad(PERM[B + 1], xf - 1, yf - 1))
+      );
+    }
+
+    // --- CANVAS ENGINE & PARTICLES ---
+    const canvas = document.getElementById('main-canvas');
+    const ctx = canvas.getContext('2d');
+    const canvasArea = document.getElementById('canvas-area');
+
+    let width = 0;
+    let height = 0;
+    let mouseX = -1000;
+    let mouseY = -1000;
+
+    function resizeCanvas() {
+      width = canvasArea.clientWidth;
+      height = canvasArea.clientHeight;
+      canvas.width = width * window.devicePixelRatio;
+      canvas.height = height * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouseX = e.clientX - rect.left;
+      mouseY = e.clientY - rect.top;
+    });
+    canvas.addEventListener('mouseleave', () => {
+      mouseX = -1000;
+      mouseY = -1000;
+    });
+
+    const NUM_PARTICLES = 80;
+    const particles = [];
+
+    function initParticles() {
+      particles.length = 0;
+      for (let i = 0; i < NUM_PARTICLES; i++) {
+        const isGreen = Math.random() < 0.05;
+        particles.push({
+          x: Math.random() * (width || 800),
+          y: Math.random() * (height || 600),
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: (Math.random() - 0.5) * 0.3,
+          alpha: Math.random() * 0.7 + 0.3,
+          color: isGreen ? '#1A6B00' : '#D4CFC4',
+          size: 1.5,
+          group: i % 2 === 0 ? 1 : 2
+        });
+      }
+    }
+    initParticles();
+
+    // Clock
+    function updateClock() {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('clock').textContent = `${hh}:${mm}:${ss}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // --- DOM INTERACTIVITY ---
+    const zone1 = document.getElementById('zone-1');
+    const zone2 = document.getElementById('zone-2');
+    const file1Input = document.getElementById('file-1');
+    const file2Input = document.getElementById('file-2');
+    const btnRun = document.getElementById('btn-run');
+    const btnHint = document.getElementById('btn-hint');
+
+    zone1.addEventListener('click', (e) => {
+      if (e.target.classList.contains('clear-file-btn')) return;
+      file1Input.click();
+    });
+    zone2.addEventListener('click', (e) => {
+      if (e.target.classList.contains('clear-file-btn')) return;
+      file2Input.click();
+    });
+
+    file1Input.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) loadFile(1, e.target.files[0]);
+    });
+    file2Input.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) loadFile(2, e.target.files[0]);
+    });
+
+    document.querySelectorAll('.clear-file-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const slot = parseInt(btn.getAttribute('data-slot'));
+        clearFile(slot);
+      });
+    });
+
+    [zone1, zone2].forEach((zone, idx) => {
+      const slotNum = idx + 1;
+      zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zone.classList.add('dragover');
+      });
+      zone.addEventListener('dragleave', () => {
+        zone.classList.remove('dragover');
+      });
+      zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+          loadFile(slotNum, e.dataTransfer.files[0]);
+        }
+      });
+    });
+
+    function loadFile(slotNum, file) {
+      if (slotNum === 1) {
+        if (!file1) stats.docsLoaded++;
+        file1 = file;
+        renderZoneUI(1, file.name, formatSize(file.size));
+      } else {
+        if (!file2) stats.docsLoaded++;
+        file2 = file;
+        renderZoneUI(2, file.name, formatSize(file.size));
+      }
+      updateStats();
+      checkReady();
+    }
+
+    function clearFile(slotNum) {
+      if (slotNum === 1) {
+        file1 = null;
+        file1Input.value = '';
+        renderZoneEmptyUI(1);
+      } else {
+        file2 = null;
+        file2Input.value = '';
+        renderZoneEmptyUI(2);
+      }
+      stats.docsLoaded = (file1 ? 1 : 0) + (file2 ? 1 : 0);
+      updateStats();
+      if (currentState !== STATE_ANALYSING) {
+        if (!file1 || !file2) currentState = STATE_IDLE;
+      }
+      checkReady();
+    }
+
+    function renderZoneUI(slotNum, name, sizeStr) {
+      const zone = document.getElementById(`zone-${slotNum}`);
+      const title = document.getElementById(`title-${slotNum}`);
+      const sub = document.getElementById(`sub-${slotNum}`);
+      zone.classList.add('has-file');
+      title.textContent = truncate(name, 22);
+      sub.textContent = sizeStr;
+    }
+
+    function renderZoneEmptyUI(slotNum) {
+      const zone = document.getElementById(`zone-${slotNum}`);
+      const title = document.getElementById(`title-${slotNum}`);
+      const sub = document.getElementById(`sub-${slotNum}`);
+      zone.classList.remove('has-file');
+      title.textContent = `DOCUMENT 0${slotNum}`;
+      sub.textContent = 'DROP PDF OR CLICK';
+    }
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    function truncate(str, num) {
+      if (str.length <= num) return str;
+      return str.slice(0, num - 3) + '...';
+    }
+
+    function checkReady() {
+      if (file1 && file2) {
+        btnRun.disabled = false;
+        btnRun.classList.add('ready');
+        btnHint.textContent = 'READY FOR ANALYSIS';
+        if (currentState === STATE_IDLE) currentState = STATE_FILES_LOADED;
+      } else {
+        btnRun.disabled = true;
+        btnRun.classList.remove('ready');
+        btnHint.textContent = 'SELECT BOTH DOCUMENTS TO ENABLE';
+      }
+    }
+
+    // Toggles
+    document.querySelectorAll('.toggle-row').forEach(row => {
+      row.addEventListener('click', () => {
+        row.classList.toggle('active');
+      });
+    });
+
+    // Sensitivity
+    const sensRange = document.getElementById('sensitivity-range');
+    const sensVal = document.getElementById('sensitivity-val');
+    sensRange.addEventListener('input', (e) => {
+      sensVal.textContent = `${e.target.value}%`;
+    });
+
+    // RUN ANALYSIS Click
+    let analysingStartTime = 0;
+    let currentResult = null;
+
+    btnRun.addEventListener('click', () => {
+      if (!file1 || !file2) return;
+      currentState = STATE_ANALYSING;
+      analysingStartTime = performance.now();
+
+      const sens = parseInt(sensRange.value) / 100;
+      const base = 65 + Math.floor(Math.sin(file1.size + file2.size) * 28);
+      const score = Math.min(98, Math.max(30, Math.floor(base * sens + (Math.random() * 8 - 4))));
+
+      currentResult = generateResultData(score);
+    });
+
+    function generateResultData(score) {
+      const words = ["SYNTAX", "SCHEMA", "DATA", "QUERY", "INDEX", "STREAM", "PARSER", "TOKEN", "VECTOR", "PAYLOAD", "BUFFER", "SCRIPT", "MATRIX", "OBJECT", "SYSTEM", "CACHE", "METHOD", "BINARY", "CONFIG", "STATE"];
+      
+      const doc1Bars = words.map(w => ({ word: w, val: Math.floor(Math.random() * 75) + 20 }));
+      const doc2Bars = words.map(w => ({ word: w, val: Math.floor(Math.random() * 75) + 20 }));
+
+      const d1w = Math.floor(1100 + Math.random() * 500);
+      const d2w = Math.floor(1050 + Math.random() * 450);
+
+      return {
+        score,
+        doc1Name: file1 ? file1.name : "doc1.pdf",
+        doc2Name: file2 ? file2.name : "doc2.pdf",
+        doc1Bars,
+        doc2Bars,
+        doc1Words: d1w,
+        doc2Words: d2w,
+        doc1Sentences: Math.floor(d1w / 12),
+        doc2Sentences: Math.floor(d2w / 13)
+      };
+    }
+
+    // History Row Click
+    document.querySelectorAll('.history-row').forEach(row => {
+      row.addEventListener('click', () => {
+        const pair = row.getAttribute('data-pair').split(' vs ');
+        const score = parseInt(row.getAttribute('data-score'));
+
+        file1 = { name: pair[0], size: 142000 };
+        file2 = { name: pair[1], size: 189000 };
+
+        renderZoneUI(1, file1.name, '142 KB');
+        renderZoneUI(2, file2.name, '189 KB');
+
+        stats.docsLoaded = 2;
+        updateStats();
+        checkReady();
+
+        currentResult = generateResultData(score);
+        currentState = STATE_RESULTS;
+      });
+    });
+
+    // Reset Button
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      clearFile(1);
+      clearFile(2);
+      currentState = STATE_IDLE;
+    });
+
+    // Export PNG
+    document.getElementById('btn-export').addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.download = `dae-${Date.now()}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    });
+
+    // Fullscreen Toggle
+    const btnFullscreen = document.getElementById('btn-fullscreen');
+    function toggleFullscreen() {
+      canvasArea.classList.toggle('fullscreen-overlay');
+      resizeCanvas();
+    }
+    btnFullscreen.addEventListener('click', toggleFullscreen);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && canvasArea.classList.contains('fullscreen-overlay')) {
+        toggleFullscreen();
+      }
+    });
+
+    function updateStats() {
+      document.getElementById('stat-docs').textContent = stats.docsLoaded;
+      document.getElementById('stat-runs').textContent = stats.analysesRun;
+
+      if (stats.scores.length === 0) {
+        document.getElementById('stat-avg').textContent = '—';
+      } else {
+        const sum = stats.scores.reduce((a, b) => a + b, 0);
+        const avg = Math.round(sum / stats.scores.length);
+        document.getElementById('stat-avg').textContent = `${avg}%`;
+      }
+    }
+
+    // --- ANIMATION RENDER LOOP ---
+    let lastTime = performance.now();
+    let frameCount = 0;
+    let fpsTimer = performance.now();
+
+    function animate(time) {
+      const delta = time - lastTime;
+      lastTime = time;
+
+      frameCount++;
+      if (time - fpsTimer >= 1000) {
+        const fps = Math.round((frameCount * 1000) / (time - fpsTimer));
+        document.getElementById('fps-display').textContent = `${fps} FPS`;
+        frameCount = 0;
+        fpsTimer = time;
+      }
+
+      if (currentState === STATE_RESULTS) {
+        ctx.fillStyle = '#F5F0E8';
+        ctx.fillRect(0, 0, width, height);
+        renderResultsState();
+      } else if (currentState === STATE_ANALYSING) {
+        renderAnalysingState(time);
+      } else {
+        // IDLE / FILES LOADED trails
+        ctx.fillStyle = 'rgba(245, 240, 232, 0.25)';
+        ctx.fillRect(0, 0, width, height);
+
+        if (currentState === STATE_IDLE) {
+          renderIdleState(time);
+        } else if (currentState === STATE_FILES_LOADED) {
+          renderFilesLoadedState(time);
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    // STATE 1: IDLE
+    function renderIdleState(time) {
+      particles.forEach(p => {
+        const angle = noise2D(p.x * 0.003, p.y * 0.003 + time * 0.00015) * Math.PI * 4;
+        p.vx += Math.cos(angle) * 0.04;
+        p.vy += Math.sin(angle) * 0.04;
+
+        // Mouse gentle repulsion (80px radius)
+        const dx = mouseX - p.x;
+        const dy = mouseY - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 80) {
+          const force = (80 - dist) / 80;
+          p.vx -= (dx / dist) * force * 0.5;
+          p.vy -= (dy / dist) * force * 0.5;
+        }
+
+        p.vx *= 0.94;
+        p.vy *= 0.94;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.x < 0) p.x = width;
+        if (p.x > width) p.x = 0;
+        if (p.y < 0) p.y = height;
+        if (p.y > height) p.y = 0;
+
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.alpha;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+      });
+      ctx.globalAlpha = 1.0;
+
+      // Center fading text
+      const alphaVal = 0.4 + 0.3 * Math.sin(time * 0.002);
+      ctx.globalAlpha = Math.max(0.1, alphaVal);
+      ctx.fillStyle = '#C4BFB4';
+      ctx.font = '13px "Space Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.letterSpacing = '6px';
+      ctx.fillText('DROP TWO DOCUMENTS', width / 2, height / 2 - 10);
+
+      ctx.fillStyle = '#D4CFC4';
+      ctx.font = '10px "Space Mono", monospace';
+      ctx.letterSpacing = '4px';
+      ctx.fillText('TO BEGIN ANALYSIS', width / 2, height / 2 + 16);
+      ctx.globalAlpha = 1.0;
+    }
+
+    // STATE 2: FILES LOADED
+    function renderFilesLoadedState(time) {
+      const f1 = { x: width * 0.3, y: height * 0.5 };
+      const f2 = { x: width * 0.7, y: height * 0.5 };
+
+      particles.forEach(p => {
+        const target = p.group === 1 ? f1 : f2;
+        const dx = target.x - p.x;
+        const dy = target.y - p.y;
+        const dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+
+        p.vx += (dx / dist) * 0.1;
+        p.vy += (dy / dist) * 0.1;
+
+        const mdx = mouseX - p.x;
+        const mdy = mouseY - p.y;
+        const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
+        if (mdist < 80) {
+          const force = (80 - mdist) / 80;
+          p.vx -= (mdx / mdist) * force * 0.6;
+          p.vy -= (mdy / mdist) * force * 0.6;
+        }
+
+        p.vx *= 0.92;
+        p.vy *= 0.92;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        ctx.fillStyle = p.color === '#1A6B00' ? '#1A6B00' : '#D4CFC4';
+        ctx.globalAlpha = p.alpha;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+      });
+      ctx.globalAlpha = 1.0;
+
+      // Expanding rings at focal points (alpha 0.03)
+      const radius = 50 + Math.sin(time * 0.003) * 20;
+      [f1, f2].forEach(f => {
+        for (let r = radius; r > 0; r -= 15) {
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, r, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(26, 107, 0, 0.03)';
+          ctx.fill();
+        }
+      });
+
+      // Thin scan line left-to-right every 4 seconds
+      const lineX = ((time % 4000) / 4000) * width;
+      ctx.strokeStyle = 'rgba(26, 107, 0, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(lineX, height * 0.2);
+      ctx.lineTo(lineX, height * 0.8);
+      ctx.stroke();
+
+      // Center text
+      ctx.fillStyle = '#1A6B00';
+      ctx.font = '13px "Space Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.letterSpacing = '6px';
+      ctx.fillText('READY TO ANALYSE', width / 2, height / 2 + 5);
+    }
+
+    // STATE 3: ANALYSING
+    function renderAnalysingState(time) {
+      const elapsed = time - analysingStartTime;
+      const center = { x: width / 2, y: height / 2 };
+
+      if (elapsed < 1000) {
+        // 0-1s: particles converge center, overlay alpha increasing
+        const progress = elapsed / 1000;
+        particles.forEach(p => {
+          p.x += (center.x - p.x) * 0.08;
+          p.y += (center.y - p.y) * 0.08;
+          ctx.fillStyle = '#1A6B00';
+          ctx.globalAlpha = p.alpha;
+          ctx.fillRect(p.x, p.y, p.size, p.size);
+        });
+        ctx.globalAlpha = 1.0;
+
+        ctx.fillStyle = `rgba(245, 240, 232, ${progress * 0.5})`;
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.fillStyle = '#0A0A0A';
+        ctx.font = '11px "Space Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.letterSpacing = '4px';
+        ctx.fillText('PARSING DOCUMENT VECTORS...', center.x, center.y);
+
+      } else if (elapsed < 2000) {
+        // 1-2s: horizontal scan line sweeps top to bottom, color #0A0A0A alpha 0.6
+        const progress = (elapsed - 1000) / 1000;
+        const scanY = progress * height;
+
+        ctx.fillStyle = '#F5F0E8';
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.strokeStyle = '#0A0A0A';
+        ctx.globalAlpha = 0.6;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, scanY);
+        ctx.lineTo(width, scanY);
+        ctx.stroke();
+
+        ctx.globalAlpha = 1.0;
+        ctx.fillStyle = '#0A0A0A';
+        ctx.font = '11px "Space Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.letterSpacing = '4px';
+        ctx.fillText('COMPUTING SENTENCE DIFF MATRIX...', center.x, center.y);
+
+      } else if (elapsed < 3000) {
+        // 2-3s: results build in
+        const progress = (elapsed - 2000) / 1000;
+        ctx.fillStyle = '#F5F0E8';
+        ctx.fillRect(0, 0, width, height);
+
+        if (currentResult) renderResultsBars(progress);
+
+        ctx.fillStyle = '#1A6B00';
+        ctx.font = '11px "Space Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.letterSpacing = '4px';
+        ctx.fillText('GENERATING VISUALIZATION...', center.x, center.y - 40);
+
+      } else {
+        // Complete sequence -> STATE 4
+        currentState = STATE_RESULTS;
+        stats.analysesRun++;
+        if (currentResult) stats.scores.push(currentResult.score);
+        updateStats();
+      }
+    }
+
+    // STATE 4: RESULTS
+    let barClickBounds = [];
+
+    function renderResultsState() {
+      if (!currentResult) return;
+      renderResultsBars(1.0);
+    }
+
+    function renderResultsBars(progress) {
+      barClickBounds = [];
+
+      const topMargin = 120;
+      const bottomMargin = 60;
+      const chartHeight = height - topMargin - bottomMargin;
+      const halfWidth = width / 2;
+
+      // Score
+      const score = currentResult.score;
+      let scoreColor = '#1A6B00';
+      if (score < 40) scoreColor = '#CC2200';
+      else if (score <= 70) scoreColor = '#B87000';
+
+      ctx.fillStyle = scoreColor;
+      ctx.font = '56px "Space Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.letterSpacing = '2px';
+      ctx.fillText(`${score}%`, width / 2, 68);
+
+      ctx.fillStyle = '#6B6760';
+      ctx.font = '9px "Space Mono", monospace';
+      ctx.letterSpacing = '3px';
+      ctx.fillText('SIMILARITY INDEX', width / 2, 86);
+
+      // Center 1px vertical line
+      ctx.strokeStyle = '#0A0A0A';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(halfWidth, topMargin - 15);
+      ctx.lineTo(halfWidth, height - bottomMargin + 10);
+      ctx.stroke();
+
+      // Headers
+      ctx.font = '9px "Space Mono", monospace';
+      ctx.letterSpacing = '2px';
+
+      ctx.fillStyle = '#0A0A0A';
+      ctx.textAlign = 'left';
+      ctx.fillText(`DOC 01: ${truncate(currentResult.doc1Name, 20)}`, 30, topMargin - 15);
+
+      ctx.fillStyle = '#1A6B00';
+      ctx.textAlign = 'right';
+      ctx.fillText(`DOC 02: ${truncate(currentResult.doc2Name, 20)}`, width - 30, topMargin - 15);
+
+      // Left Half Bars (Doc 1 - #0A0A0A fill, bg bars #E4E0D5)
+      const numBars = currentResult.doc1Bars.length;
+      const leftZoneW = halfWidth - 60;
+      const barW = Math.max(4, (leftZoneW / numBars) - 4);
+      const startXLeft = 30;
+
+      let hoveredBar = null;
+
+      currentResult.doc1Bars.forEach((item, i) => {
+        const x = startXLeft + i * (barW + 4);
+        const maxH = chartHeight - 30;
+        const h = (item.val / 100) * maxH * progress;
+        const y = topMargin + (maxH - h);
+
+        ctx.fillStyle = '#E4E0D5';
+        ctx.fillRect(x, topMargin, barW, maxH);
+
+        ctx.fillStyle = '#0A0A0A';
+        ctx.fillRect(x, y, barW, h);
+
+        const bounds = { x, y: topMargin, w: barW, h: maxH, word: item.word, val: item.val, doc: 'DOC 01' };
+        barClickBounds.push(bounds);
+
+        if (mouseX >= x && mouseX <= x + barW && mouseY >= topMargin && mouseY <= topMargin + maxH) {
+          hoveredBar = bounds;
+        }
+
+        if (i % 2 === 0 && barW >= 6) {
+          ctx.fillStyle = '#6B6760';
+          ctx.font = '8px "Space Mono", monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(item.word.slice(0, 4), x + barW / 2, height - bottomMargin + 4);
+        }
+      });
+
+      // Right Half Bars (Doc 2 - #1A6B00 fill, bg bars #E4E0D5)
+      const rightZoneW = halfWidth - 60;
+      const startXRight = halfWidth + 30;
+
+      currentResult.doc2Bars.forEach((item, i) => {
+        const x = startXRight + i * (barW + 4);
+        const maxH = chartHeight - 30;
+        const h = (item.val / 100) * maxH * progress;
+        const y = topMargin + (maxH - h);
+
+        ctx.fillStyle = '#E4E0D5';
+        ctx.fillRect(x, topMargin, barW, maxH);
+
+        ctx.fillStyle = '#1A6B00';
+        ctx.fillRect(x, y, barW, h);
+
+        const bounds = { x, y: topMargin, w: barW, h: maxH, word: item.word, val: item.val, doc: 'DOC 02' };
+        barClickBounds.push(bounds);
+
+        if (mouseX >= x && mouseX <= x + barW && mouseY >= topMargin && mouseY <= topMargin + maxH) {
+          hoveredBar = bounds;
+        }
+
+        if (i % 2 === 0 && barW >= 6) {
+          ctx.fillStyle = '#6B6760';
+          ctx.font = '8px "Space Mono", monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(item.word.slice(0, 4), x + barW / 2, height - bottomMargin + 4);
+        }
+      });
+
+      // Bottom stats row Space Mono 9px #6B6760
+      ctx.fillStyle = '#6B6760';
+      ctx.font = '9px "Space Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.letterSpacing = '1px';
+      ctx.fillText(
+        `DOC 1: ${currentResult.doc1Words} WORDS | ${currentResult.doc1Sentences} SENTENCES   ///   DOC 2: ${currentResult.doc2Words} WORDS | ${currentResult.doc2Sentences} SENTENCES`,
+        width / 2,
+        height - 14
+      );
+
+      // Tooltip on canvas click/hover
+      if (hoveredBar) {
+        const ttW = 160;
+        const ttH = 40;
+        let ttX = mouseX + 12;
+        let ttY = mouseY - 44;
+
+        if (ttX + ttW > width - 10) ttX = mouseX - ttW - 12;
+        if (ttY < 10) ttY = mouseY + 12;
+
+        ctx.fillStyle = '#FDFCFA';
+        ctx.fillRect(ttX, ttY, ttW, ttH);
+        ctx.strokeStyle = '#0A0A0A';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(ttX, ttY, ttW, ttH);
+
+        ctx.fillStyle = '#0A0A0A';
+        ctx.font = '9px "Space Mono", monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(`${hoveredBar.doc} :: ${hoveredBar.word}`, ttX + 8, ttY + 15);
+
+        ctx.fillStyle = '#6B6760';
+        ctx.fillText(`COUNT: ${hoveredBar.val}`, ttX + 8, ttY + 29);
+      }
+    }
+
+    // Canvas click event for bar tooltip interaction
+    canvas.addEventListener('click', (e) => {
+      if (currentState !== STATE_RESULTS) return;
+      const rect = canvas.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+
+      barClickBounds.forEach(b => {
+        if (cx >= b.x && cx <= b.x + b.w && cy >= b.y && cy <= b.y + b.h) {
+          // Interactive response on click
+        }
+      });
+    });
+
+    // Start loop
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

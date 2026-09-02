@@ -1,0 +1,92 @@
+/* DAE - Data Analyser Engine Pixel & Retro Utility Styles */
+
+.pixel-border {
+  border: 2px solid var(--border-color);
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.4);
+  position: relative;
+}
+
+.pixel-badge {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 4px;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
+}
+
+.pixel-badge-green {
+  background: #059669;
+  color: #ecfdf5;
+  border: 1px solid #10b981;
+}
+
+.pixel-badge-red {
+  background: #dc2626;
+  color: #fef2f2;
+  border: 1px solid #ef4444;
+}
+
+.pixel-badge-amber {
+  background: #d97706;
+  color: #fffbeb;
+  border: 1px solid #f59e0b;
+}
+
+.pixel-badge-indigo {
+  background: #4f46e5;
+  color: #eef2ff;
+  border: 1px solid #6366f1;
+}
+
+.pixel-grid-bg {
+  background-size: 24px 24px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+}
+
+.pixel-btn {
+  font-family: var(--font-mono);
+  letter-spacing: 0.5px;
+  position: relative;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.pixel-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
+}
+
+.pixel-pulse {
+  animation: pixelPulse 2s infinite ease-in-out;
+}
+
+@keyframes pixelPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.scanline-overlay {
+  position: relative;
+}
+
+.scanline-overlay::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+  background-size: 100% 4px;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.3;
+}
