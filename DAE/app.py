@@ -992,6 +992,10 @@ def results():
         }
     return render_template("results.html", result=result_data, doc_info=doc_info, entry_id=entry_id)
 
+@app.route("/share/<entry_id>")
+def share_result(entry_id):
+    return redirect(url_for("results", id=entry_id))
+
 @app.route("/download/txt")
 def download_txt():
     entry_id = request.args.get("id")

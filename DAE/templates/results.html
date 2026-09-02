@@ -882,6 +882,30 @@
   66%  { content: ' ●●●'; }
   100% { content: ' ●'; }
 }
+
+.share-btn {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  padding: 6px 14px;
+  border: 1px solid #D4CFC4;
+  background: transparent;
+  color: #6B6760;
+  cursor: pointer;
+  letter-spacing: 2px;
+  transition: all 0.1s;
+  border-radius: 0 !important;
+}
+
+.share-btn:hover {
+  border-color: #0A0A0A;
+  color: #0A0A0A;
+}
+
+.share-btn.copied {
+  border-color: #1A6B00;
+  color: #1A6B00;
+  background: rgba(26, 107, 0, 0.06);
+}
 </style>
 {% endblock %}
 
@@ -930,6 +954,7 @@
     </div>
 
     <div class="top-actions-right">
+      <button class="share-btn" onclick="copyShareLink()" id="share-btn">[SHARE ↗]</button>
       <a href="{% if entry_id %}/download/pdf?id={{ entry_id }}{% else %}/download/pdf{% endif %}" class="action-btn-top {% if not result %}disabled{% endif %}">[↓ PDF]</a>
       <a href="{% if entry_id %}/download/json?id={{ entry_id }}{% else %}/download/json{% endif %}" class="action-btn-top {% if not result %}disabled{% endif %}">[↓ JSON]</a>
       <a href="{% if entry_id %}/download/txt?id={{ entry_id }}{% else %}/download/txt{% endif %}" class="action-btn-top {% if not result %}disabled{% endif %}">[↓ TXT]</a>
@@ -1767,5 +1792,42 @@
       else bar.style.background = '#CC2200';
     });
   });
+
+  function copyShareLink() {
+    const entryId = "{{ entry_id or '' }}";
+    let shareUrl;
+    
+    if (entryId) {
+        shareUrl = window.location.origin + '/share/' + entryId;
+    } else {
+        shareUrl = window.location.href;
+    }
+    
+    navigator.clipboard.writeText(shareUrl).then(() => {
+        const btn = document.getElementById('share-btn');
+        btn.textContent = '[COPIED ✓]';
+        btn.classList.add('copied');
+        setTimeout(() => {
+            btn.textContent = '[SHARE ↗]';
+            btn.classList.remove('copied');
+        }, 2000);
+    }).catch(() => {
+        // Fallback for older browsers
+        const input = document.createElement('input');
+        input.value = shareUrl;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        
+        const btn = document.getElementById('share-btn');
+        btn.textContent = '[COPIED ✓]';
+        btn.classList.add('copied');
+        setTimeout(() => {
+            btn.textContent = '[SHARE ↗]';
+            btn.classList.remove('copied');
+        }, 2000);
+    });
+  }
 </script>
 {% endblock %}

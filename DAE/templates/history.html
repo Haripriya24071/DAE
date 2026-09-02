@@ -185,6 +185,24 @@
     font-weight: 700;
   }
 
+  .history-share-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    padding: 3px 8px;
+    border: 1px solid #D4CFC4;
+    background: transparent;
+    color: #AAAAAA;
+    cursor: pointer;
+    margin-left: 6px;
+    letter-spacing: 1px;
+    border-radius: 0 !important;
+  }
+
+  .history-share-btn:hover {
+    border-color: #1A6B00;
+    color: #1A6B00;
+  }
+
   .table-footer-note {
     font-family: 'Space Mono', monospace;
     font-size: 8px;
@@ -349,7 +367,8 @@
                   </span>
                 </td>
                 <td>
-                  <a href="/results?id={{ entry.id }}" class="action-view-link" onclick="event.stopPropagation();">[VIEW →]</a>
+                  <a href="/result?id={{ entry.id }}" class="action-view-link" onclick="event.stopPropagation();">[VIEW →]</a>
+                  <button onclick="event.stopPropagation(); copyLink('{{ entry.id }}')" class="history-share-btn" id="share-{{ entry.id }}">[SHARE]</button>
                 </td>
               </tr>
             {% endfor %}
@@ -420,6 +439,21 @@
           row.style.display = 'none';
         }
       }
+    });
+  }
+
+  function copyLink(entryId) {
+    const url = window.location.origin + '/share/' + entryId;
+    navigator.clipboard.writeText(url).then(() => {
+        const btn = document.getElementById('share-' + entryId);
+        btn.textContent = '[✓]';
+        btn.style.color = '#1A6B00';
+        btn.style.borderColor = '#1A6B00';
+        setTimeout(() => {
+            btn.textContent = '[SHARE]';
+            btn.style.color = '';
+            btn.style.borderColor = '';
+        }, 2000);
     });
   }
 </script>
