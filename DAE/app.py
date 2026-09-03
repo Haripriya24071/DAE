@@ -8,6 +8,13 @@ from pathlib import Path
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, Response
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_groq import ChatGroq
+from langchain_core.prompts import PromptTemplate
+from langchain_core.documents import Document
+from langchain_community.document_loaders import PyPDFLoader
 
 logging.basicConfig(level=logging.INFO)
 
@@ -48,10 +55,6 @@ def api_check():
 
 @app.route("/api/test-analyze")
 def test_analyze():
-    from langchain_community.vectorstores import FAISS
-    from langchain_core.documents import Document
-    from langchain_groq import ChatGroq
-    from langchain_huggingface import HuggingFaceEmbeddings
     results = {}
     try:
         emb = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
@@ -165,7 +168,6 @@ def extract_text_from_file(filepath):
     ext = filepath.rsplit(".", 1)[-1].lower()
     
     if ext == "pdf":
-        from langchain_community.document_loaders import PyPDFLoader
         loader = PyPDFLoader(filepath)
         return loader.load()
     
@@ -174,7 +176,6 @@ def extract_text_from_file(filepath):
             from docx import Document as DocxDocument
             doc = DocxDocument(filepath)
             full_text = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
-            from langchain_core.documents import Document
             return [Document(page_content=full_text, metadata={"source": filepath})]
         except ImportError:
             return {"error": "python-docx not installed. Run: pip install python-docx"}
@@ -185,7 +186,6 @@ def extract_text_from_file(filepath):
         try:
             with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
                 content = f.read()
-            from langchain_core.documents import Document
             return [Document(page_content=content, metadata={"source": filepath})]
         except Exception as e:
             return {"error": f"Could not read TXT: {str(e)}"}
@@ -195,12 +195,6 @@ def extract_text_from_file(filepath):
 
 def process_documents(file_a, file_b):
     try:
-        from langchain_community.vectorstores import FAISS
-        from langchain_core.prompts import PromptTemplate
-        from langchain_groq import ChatGroq
-        from langchain_huggingface import HuggingFaceEmbeddings
-        from langchain_text_splitters import RecursiveCharacterTextSplitter
-
         emb = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         llm = ChatGroq(
             model_name="llama-3.1-8b-instant",
@@ -335,7 +329,6 @@ REASON: [One sentence explanation]"""
 
 def generate_narrative(doc_a_name, doc_b_name, results):
     try:
-        from langchain_groq import ChatGroq
         llm = ChatGroq(
             model_name="llama-3.1-8b-instant",
             api_key=os.getenv("GROQ_API_KEY")
@@ -796,12 +789,6 @@ def analyze_multi():
             return jsonify({"error": "At least 2 PDF, DOCX, or TXT files required"}), 400
         if len(files) > 5:
             return jsonify({"error": "Maximum 5 documents"}), 400
-
-        from langchain_text_splitters import RecursiveCharacterTextSplitter
-        from langchain_community.vectorstores import FAISS
-        from langchain_huggingface import HuggingFaceEmbeddings
-        from langchain_groq import ChatGroq
-        from langchain_core.prompts import PromptTemplate
 
         saved_paths = []
         names = []
@@ -1685,7 +1672,6 @@ CONTRADICTIONS FOUND ({len(contradictions)}):"""
             if overview:
                 context += f"\n\nDOCUMENT OVERVIEW: {overview}"
 
-        from langchain_groq import ChatGroq
         llm = ChatGroq(
             model_name="llama-3.1-8b-instant",
             api_key=os.getenv("GROQ_API_KEY")
