@@ -88,13 +88,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const barFill = card.querySelector('.card-sim-bar-fill');
     if (barFill) {
       let pctWidth = 30;
-      let barColor = '#1A6B00';
+      let barColor = '#0A0A0A';
       if (scoreVal < 0.3) {
         pctWidth = 90;
-        barColor = '#CC2200';
+        barColor = '#CC1C1C';
       } else if (scoreVal <= 0.5) {
         pctWidth = 60;
-        barColor = '#996600';
+        barColor = '#8B6914';
       }
       barFill.style.backgroundColor = barColor;
       setTimeout(() => {
@@ -137,11 +137,11 @@ function setupHoverTooltips() {
 
     if (span.classList.contains('hot')) {
       tooltip.textContent = "SHARED TERM — appears in both documents";
-      tooltip.style.boxShadow = "2px 2px 0px #CC2200";
+      tooltip.style.boxShadow = "2px 2px 0px #CC1C1C";
       positionTooltip(span);
     } else if (span.classList.contains('warm')) {
       tooltip.textContent = "UNIQUE TO THIS DOCUMENT";
-      tooltip.style.boxShadow = "2px 2px 0px #1A6B00";
+      tooltip.style.boxShadow = "2px 2px 0px #0A0A0A";
       positionTooltip(span);
     } else {
       tooltip.style.display = 'none';
@@ -212,7 +212,7 @@ function drawTraceLine(spanA, spanB) {
   line.setAttribute('y1', y1);
   line.setAttribute('x2', x2);
   line.setAttribute('y2', y2);
-  line.setAttribute('stroke', '#CC2200');
+  line.setAttribute('stroke', '#CC1C1C');
   line.setAttribute('stroke-width', '1.5');
   line.setAttribute('stroke-dasharray', '4 3');
   line.setAttribute('opacity', '0.7');
@@ -249,9 +249,9 @@ function clearTraceLine() {
   if (!meterFill || !scoreText) return;
 
   const targetPct = parseInt(meterFill.getAttribute('data-pct') || '43');
-  let color = '#CC2200';
-  if (targetPct > 70) color = '#1A6B00';
-  else if (targetPct >= 40) color = '#996600';
+  let color = '#CC1C1C';
+  if (targetPct > 70) color = '#0A0A0A';
+  else if (targetPct >= 40) color = '#8B6914';
 
   meterFill.style.backgroundColor = color;
   scoreText.style.color = color;
@@ -348,9 +348,9 @@ function removeMessage(id) {
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.confidence-bar-fill').forEach(bar => {
     const val = parseFloat(bar.dataset.confidence);
-    if (val >= 80) bar.style.background = '#1A6B00';
-    else if (val >= 60) bar.style.background = '#996600';
-    else bar.style.background = '#CC2200';
+    if (val >= 80) bar.style.background = '#0A0A0A';
+    else if (val >= 60) bar.style.background = '#8B6914';
+    else bar.style.background = '#CC1C1C';
   });
 });
 

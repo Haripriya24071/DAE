@@ -37,8 +37,8 @@ function copyLink(entryId) {
   navigator.clipboard.writeText(url).then(() => {
     const btn = document.getElementById('share-' + entryId);
     btn.textContent = '[✓]';
-    btn.style.color = '#1A6B00';
-    btn.style.borderColor = '#1A6B00';
+    btn.style.color = '#CC1C1C';
+    btn.style.borderColor = '#CC1C1C';
     setTimeout(() => {
       btn.textContent = '[SHARE]';
       btn.style.color = '';

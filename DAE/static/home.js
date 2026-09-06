@@ -14,9 +14,9 @@
   resizeH();
 
   const labels = [
-    { text: "CONTRADICTION DETECTED", color: "#CC2200" },
-    { text: "AGREEMENT FOUND", color: "#1A6B00" },
-    { text: "BLIND SPOT", color: "#996600" }
+    { text: "CONTRADICTION DETECTED", color: "#CC1C1C" },
+    { text: "AGREEMENT FOUND", color: "#0A0A0A" },
+    { text: "BLIND SPOT", color: "#8B6914" }
   ];
   let labelIdx = 0;
   let labelAlpha = 0;
@@ -35,7 +35,7 @@
   function renderHeroCanvas(time) {
     const w = canvas.clientWidth;
     const h = 400;
-    ctx.fillStyle = '#F5F0E8';
+    ctx.fillStyle = '#F7F5F0';
     ctx.fillRect(0, 0, w, h);
 
     const rectW = 120;
@@ -44,7 +44,7 @@
     const rectB = { x: w * 0.8 - rectW / 2, y: h * 0.5 - rectH / 2 };
 
     // Connecting lines
-    ctx.strokeStyle = '#D4CFC4';
+    ctx.strokeStyle = '#D0CBC2';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(rectA.x + rectW, rectA.y + rectH / 2);
@@ -59,7 +59,7 @@
       const px = (rectA.x + rectW) + p.progress * (rectB.x - (rectA.x + rectW));
       const py = (h * 0.5) + p.offsetY * Math.sin(p.progress * Math.PI);
 
-      ctx.fillStyle = '#1A6B00';
+      ctx.fillStyle = '#0A0A0A';
       ctx.fillRect(px, py, 3, 3);
     });
 
@@ -108,7 +108,7 @@
 
   function drawDocRect(x, y, w, h, label) {
     // Hard shadow
-    ctx.fillStyle = '#D4CFC4';
+    ctx.fillStyle = '#D0CBC2';
     ctx.fillRect(x + 4, y + 4, w, h);
 
     // Rect body
@@ -125,7 +125,7 @@
     ctx.fillText(label, x + w / 2, y + 24);
 
     // 6 text simulation lines
-    ctx.fillStyle = '#E4E0D5';
+    ctx.fillStyle = '#E5E2DC';
     for (let i = 0; i < 6; i++) {
       ctx.fillRect(x + 16, y + 44 + i * 16, w - 32, 4);
     }

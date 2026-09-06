@@ -81,7 +81,7 @@ function setMultiSlotFile(slotNum, file) {
   if (nameEl) nameEl.textContent = file.name;
   
   const ext = file.name.split('.').pop().toUpperCase();
-  const extColors = {PDF: '#CC2200', DOCX: '#185FA5', TXT: '#6B6760'};
+  const extColors = {PDF: '#CC1C1C', DOCX: '#0A0A0A', TXT: '#6B6760'};
   if (sizeEl) sizeEl.innerHTML = `<span style="font-family:'Space Mono',monospace; font-size:8px; font-weight:bold; color:${extColors[ext] || '#6B6760'}; margin-right:6px;">${ext}</span>${formatSize(file.size)}`;
 
   updateDocsLoadedStat();
@@ -310,7 +310,7 @@ function setSlotFile(slotNum, file) {
   nameEl.textContent = file.name;
 
   const ext = file.name.split('.').pop().toUpperCase();
-  const extColors = {PDF: '#CC2200', DOCX: '#185FA5', TXT: '#6B6760'};
+  const extColors = {PDF: '#CC1C1C', DOCX: '#0A0A0A', TXT: '#6B6760'};
   sizeEl.innerHTML = `<span style="font-family:'Space Mono',monospace; font-size:8px; font-weight:bold; color:${extColors[ext] || '#6B6760'}; margin-right:6px;">${ext}</span>${formatSize(file.size)}`;
 
   updateDocsLoadedStat();
@@ -445,15 +445,15 @@ function handleStreamEvent(event, data) {
     case 'contradiction':
       liveContradictions.push(data.data);
       updateLiveCounter('contradictions', liveContradictions.length);
-      const color = data.severity === 'CRITICAL' ? '#CC2200'
-        : data.severity === 'SIGNIFICANT' ? '#996600' : '#1A6B00';
+      const color = data.severity === 'CRITICAL' ? '#CC1C1C'
+        : data.severity === 'SIGNIFICANT' ? '#8B6914' : '#6B6760';
       flashCounter('contradictions', color);
       break;
 
     case 'agreement':
       liveAgreements.push(data.data);
       updateLiveCounter('agreements', liveAgreements.length);
-      flashCounter('agreements', '#1A6B00');
+      flashCounter('agreements', '#0A0A0A');
       break;
 
     case 'blind_spot_a':
@@ -577,7 +577,7 @@ for (let i = 0; i < 80; i++) {
     vx: (Math.random() - 0.5) * 0.3,
     vy: (Math.random() - 0.5) * 0.3,
     alpha: Math.random() * 0.6 + 0.3,
-    color: Math.random() < 0.05 ? '#1A6B00' : '#D4CFC4',
+    color: Math.random() < 0.05 ? '#CC1C1C' : '#D0CBC2',
     size: 1.5,
     group: i % 2 === 0 ? 1 : 2
   });
@@ -586,7 +586,7 @@ for (let i = 0; i < 80; i++) {
 let scanLineY = 0;
 
 function renderCanvas(time) {
-  ctx.fillStyle = '#F5F0E8';
+  ctx.fillStyle = '#F7F5F0';
   ctx.fillRect(0, 0, width, height);
 
   if (currentState === 1) { // IDLE
@@ -601,7 +601,7 @@ function renderCanvas(time) {
     });
     ctx.globalAlpha = 1.0;
 
-    ctx.fillStyle = '#C4BFB4';
+    ctx.fillStyle = '#9A9490';
     ctx.font = '13px "Space Mono", monospace';
     ctx.textAlign = 'center';
     ctx.fillText('DROP TWO DOCUMENTS TO BEGIN', width / 2, height / 2);
@@ -617,13 +617,13 @@ function renderCanvas(time) {
       p.vx *= 0.92; p.vy *= 0.92;
       p.x += p.vx; p.y += p.vy;
 
-      ctx.fillStyle = p.color === '#1A6B00' ? '#1A6B00' : '#D4CFC4';
+      ctx.fillStyle = p.color === '#CC1C1C' ? '#CC1C1C' : '#D0CBC2';
       ctx.globalAlpha = p.alpha;
       ctx.fillRect(p.x, p.y, p.size, p.size);
     });
     ctx.globalAlpha = 1.0;
 
-    ctx.fillStyle = '#1A6B00';
+    ctx.fillStyle = '#CC1C1C';
     ctx.font = '13px "Space Mono", monospace';
     ctx.textAlign = 'center';
     ctx.fillText('READY TO ANALYSE', width / 2, height / 2);
@@ -632,7 +632,7 @@ function renderCanvas(time) {
     scanLineY += 2;
     if (scanLineY > height) scanLineY = 0;
 
-    ctx.strokeStyle = '#1A6B00';
+    ctx.strokeStyle = '#CC1C1C';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(0, scanLineY);
@@ -645,7 +645,7 @@ function renderCanvas(time) {
     ctx.fillText('CROSS-DOCUMENT VECTOR SEARCH IN PROGRESS...', width / 2, height / 2);
 
   } else if (currentState === 4) { // RESULTS PREVIEW
-    ctx.fillStyle = '#1A6B00';
+    ctx.fillStyle = '#0A0A0A';
     ctx.font = '16px "Space Mono", monospace';
     ctx.textAlign = 'center';
     ctx.fillText('ANALYSIS COMPLETE — REDIRECTING...', width / 2, height / 2);
