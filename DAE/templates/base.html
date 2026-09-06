@@ -8,6 +8,14 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Space+Grotesk:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script>
+    (function() {
+      const saved = localStorage.getItem('dae-theme');
+      if (saved === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
   {% block head %}{% endblock %}
 </head>
 <body>
@@ -23,6 +31,9 @@
       <a href="/history" class="nav-link {% if request.path == '/history' %}active{% endif %}">HISTORY</a>
     </div>
     <div class="nav-right">
+      <button id="theme-toggle" onclick="toggleTheme()" class="theme-toggle-btn">
+        <span id="theme-icon">◐</span>
+      </button>
       <div class="nav-clock" id="nav-clock">00:00:00</div>
     </div>
   </nav>

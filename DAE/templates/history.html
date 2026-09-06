@@ -102,15 +102,15 @@
     {% else %}
 
     <!-- EMPTY STATE -->
-    <div class="empty-history-wrapper">
+    <div class="empty-history-wrapper" style="background: var(--surface); border: 1px solid var(--border);">
       <div class="empty-tag">NO HISTORY YET</div>
 
       <div class="ghost-sublabel">Your analyses will appear here</div>
 
-      <div class="ghost-table-box">
-        <div class="ghost-row" style="width: 100%;"></div>
-        <div class="ghost-row" style="width: 85%;"></div>
-        <div class="ghost-row" style="width: 92%;"></div>
+      <div class="ghost-table-box" style="background: transparent;">
+        <div class="ghost-row" style="width: 100%; background: var(--surface-2);"></div>
+        <div class="ghost-row" style="width: 85%; background: var(--surface-2);"></div>
+        <div class="ghost-row" style="width: 92%; background: var(--surface-2);"></div>
       </div>
 
       <a href="/dashboard" class="btn-cta-start">START YOUR FIRST ANALYSIS →</a>

@@ -1,3 +1,28 @@
+// Theme Toggle Logic
+function updateCircleTheme(isDark) {
+  const circles = document.querySelectorAll('.dae-circle');
+  circles.forEach(c => {
+    c.style.transition = 'border-color 0.4s, box-shadow 0.4s';
+  });
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.classList.toggle('dark');
+  localStorage.setItem('dae-theme', isDark ? 'dark' : 'light');
+  const icon = document.getElementById('theme-icon');
+  if (icon) icon.textContent = isDark ? '○' : '◐';
+  updateCircleTheme(isDark);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('dae-theme');
+  const icon = document.getElementById('theme-icon');
+  if (saved === 'dark' && icon) {
+    icon.textContent = '○';
+  }
+});
+
 // Live Clock
 function updateNavClock() {
   const now = new Date();
