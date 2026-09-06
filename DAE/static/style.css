@@ -2424,3 +2424,637 @@ tr.history-data-row:hover .action-view-link {
   background: #CC1C1C;
   color: #FDFCFA;
 }
+
+/* ============================================
+   COMPLETE DARK MODE OVERRIDES
+   ============================================ */
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background: #0D0D0D;
+  color: #F0EDE6;
+}
+
+/* ── NAV ── */
+html.dark .nav-bar,
+html.dark nav,
+html.dark header {
+  background: #141414 !important;
+  border-bottom-color: #2A2A2A !important;
+}
+
+html.dark .nav-link,
+html.dark nav a {
+  color: #888480 !important;
+}
+
+html.dark .nav-link:hover,
+html.dark nav a:hover {
+  color: #F0EDE6 !important;
+}
+
+html.dark .nav-link.active,
+html.dark nav a.active {
+  color: #CC1C1C !important;
+  border-bottom-color: #CC1C1C !important;
+}
+
+/* ── FOOTER ── */
+html.dark footer,
+html.dark .footer-bar {
+  background: #141414 !important;
+  border-top-color: #2A2A2A !important;
+  color: #555250 !important;
+}
+
+/* ── ALL CARDS AND SURFACES ── */
+html.dark .stat-box,
+html.dark .stat-card,
+html.dark .conflict-card,
+html.dark .finding-card,
+html.dark .example-card,
+html.dark .qa-panel,
+html.dark .narrative-panel,
+html.dark .narrative-section,
+html.dark .right-panel,
+html.dark .left-panel,
+html.dark .results-panel,
+html.dark .history-card {
+  background: #141414 !important;
+  border-color: #2A2A2A !important;
+  color: #F0EDE6 !important;
+}
+
+html.dark .stat-box {
+  box-shadow: 3px 3px 0 #1A1A1A !important;
+}
+
+/* ── STAT NUMBERS ── */
+html.dark .stat-value {
+  color: #F0EDE6 !important;
+}
+
+html.dark .stat-value.red { color: #CC1C1C !important; }
+html.dark .stat-value.green { color: #F0EDE6 !important; }
+html.dark .stat-label { color: #555250 !important; }
+
+/* ── TOP STRIPS ── */
+html.dark .results-top-strip,
+html.dark .top-strip,
+html.dark .doc-header-strip,
+html.dark .page-strip {
+  background: #141414 !important;
+  border-color: #2A2A2A !important;
+}
+
+html.dark .doc-pill {
+  background: #1C1C1C !important;
+  border-color: #2A2A2A !important;
+  color: #F0EDE6 !important;
+}
+
+html.dark .doc-vs { color: #555250 !important; }
+
+/* ── DOWNLOAD / ACTION BUTTONS ── */
+html.dark .download-btn,
+html.dark .action-btn {
+  border-color: #2A2A2A !important;
+  color: #888480 !important;
+  background: transparent !important;
+}
+
+html.dark .download-btn:hover,
+html.dark .action-btn:hover {
+  background: #F0EDE6 !important;
+  color: #0D0D0D !important;
+  border-color: #F0EDE6 !important;
+}
+
+/* ── TABS ── */
+html.dark .tab-row,
+html.dark .tabs-container {
+  border-color: #2A2A2A !important;
+}
+
+html.dark .tab-btn,
+html.dark .pixel-tab {
+  border-color: #2A2A2A !important;
+  color: #888480 !important;
+  background: transparent !important;
+}
+
+html.dark .tab-btn.active,
+html.dark .pixel-tab.active {
+  background: #F0EDE6 !important;
+  color: #0D0D0D !important;
+  border-color: #F0EDE6 !important;
+}
+
+/* ── CONTRADICTION / AGREEMENT CARDS ── */
+html.dark .conflict-card,
+html.dark .finding-card {
+  background: #141414 !important;
+  border-color: #2A2A2A !important;
+  box-shadow: 3px 3px 0 #1A1A1A !important;
+}
+
+html.dark .finding-card-top {
+  border-bottom-color: #2A2A2A !important;
+}
+
+html.dark .finding-col {
+  border-right-color: #2A2A2A !important;
+}
+
+html.dark .finding-col-label {
+  color: #555250 !important;
+}
+
+html.dark .finding-col-text,
+html.dark .conflict-text {
+  color: #F0EDE6 !important;
+}
+
+html.dark .finding-card-bottom {
+  background: #1C1C1C !important;
+  border-top-color: #2A2A2A !important;
+}
+
+html.dark .finding-reason { color: #888480 !important; }
+
+/* ── VERDICT AND SEVERITY BADGES ── */
+html.dark .verdict-badge.badge-disagree {
+  color: #FF4040 !important;
+  border-color: rgba(255,64,64,0.4) !important;
+  background: rgba(255,64,64,0.08) !important;
+}
+
+html.dark .verdict-badge.badge-agree {
+  color: #AAAAAA !important;
+  border-color: rgba(170,170,170,0.3) !important;
+  background: rgba(170,170,170,0.05) !important;
+}
+
+html.dark .verdict-badge.badge-partial {
+  color: #C49A28 !important;
+  border-color: rgba(196,154,40,0.4) !important;
+  background: rgba(196,154,40,0.08) !important;
+}
+
+/* ── HEATMAP WORDS ── */
+html.dark .hm-hot {
+  background: rgba(255, 64, 64, 0.2) !important;
+  color: #FF6060 !important;
+}
+
+html.dark .hm-warm {
+  background: rgba(26, 107, 0, 0.15) !important;
+  color: #88CC88 !important;
+}
+
+html.dark .hm-cool {
+  background: rgba(255,255,255,0.05) !important;
+  color: #888480 !important;
+}
+
+html.dark .hm-cold { color: #555250 !important; }
+
+/* ── WORD COUNT STATS ROW ── */
+html.dark .word-stats-row {
+  border-top-color: #2A2A2A !important;
+  color: #555250 !important;
+}
+
+/* ── CONFIDENCE INDICATOR ── */
+html.dark .confidence-indicator {
+  background: #1C1C1C !important;
+  border-bottom-color: #2A2A2A !important;
+}
+
+html.dark .confidence-bar-wrap {
+  background: #2A2A2A !important;
+}
+
+html.dark .confidence-label { color: #555250 !important; }
+
+/* ── SIMILARITY BAR ── */
+html.dark .similarity-bar-wrap,
+html.dark .progress-track {
+  background: #2A2A2A !important;
+}
+
+/* ── RIGHT PANEL (ANALYSIS SUMMARY) ── */
+html.dark .right-panel,
+html.dark .analysis-summary-panel {
+  background: #141414 !important;
+  border-left-color: #2A2A2A !important;
+}
+
+html.dark .analysis-summary-panel .section-label,
+html.dark .right-panel .panel-label {
+  color: #555250 !important;
+}
+
+html.dark .stats-list-row {
+  border-bottom-color: #2A2A2A !important;
+  color: #F0EDE6 !important;
+}
+
+html.dark .stats-list-row .label { color: #555250 !important; }
+html.dark .stats-list-row .value { color: #F0EDE6 !important; }
+
+/* ── DOWNLOAD BUTTONS IN RIGHT PANEL ── */
+html.dark .download-panel-btn {
+  background: #1C1C1C !important;
+  color: #888480 !important;
+  border-color: #2A2A2A !important;
+}
+
+html.dark .download-panel-btn:hover {
+  background: #CC1C1C !important;
+  color: #F0EDE6 !important;
+  border-color: #CC1C1C !important;
+}
+
+/* ── NARRATIVE PANEL ── */
+html.dark .narrative-panel {
+  background: #141414 !important;
+  border-color: #2A2A2A !important;
+  box-shadow: 3px 3px 0 #1A1A1A !important;
+}
+
+html.dark .narrative-header {
+  background: #1C1C1C !important;
+  border-bottom-color: #2A2A2A !important;
+}
+
+html.dark .narrative-title { color: #555250 !important; }
+
+html.dark .narrative-section {
+  border-bottom-color: #2A2A2A !important;
+}
+
+html.dark .narrative-body { color: #F0EDE6 !important; }
+
+/* ── QA PANEL ── */
+html.dark .qa-panel {
+  background: #141414 !important;
+  border-color: #2A2A2A !important;
+}
+
+html.dark .qa-header {
+  background: #1C1C1C !important;
+  border-bottom-color: #2A2A2A !important;
+}
+
+html.dark .qa-title { color: #F0EDE6 !important; }
+html.dark .qa-subtitle { color: #888480 !important; }
+
+html.dark .qa-messages {
+  border-bottom-color: #2A2A2A !important;
+}
+
+html.dark .qa-suggestion {
+  border-color: #2A2A2A !important;
+  background: #1C1C1C !important;
+  color: #888480 !important;
+}
+
+html.dark .qa-suggestion:hover {
+  border-color: #F0EDE6 !important;
+  color: #F0EDE6 !important;
+  background: #2A2A2A !important;
+}
+
+html.dark .qa-message.user .qa-bubble {
+  background: #F0EDE6 !important;
+  color: #0D0D0D !important;
+  border-color: #F0EDE6 !important;
+}
+
+html.dark .qa-message.assistant .qa-bubble {
+  background: #1C1C1C !important;
+  color: #F0EDE6 !important;
+  border-color: #2A2A2A !important;
+  border-left-color: #CC1C1C !important;
+}
+
+html.dark .qa-meta { color: #555250 !important; }
+
+html.dark .qa-input-row {
+  border-top-color: #2A2A2A !important;
+}
+
+html.dark .qa-input {
+  background: #1C1C1C !important;
+  border-color: #2A2A2A !important;
+  color: #F0EDE6 !important;
+}
+
+html.dark .qa-input:focus {
+  border-color: #F0EDE6 !important;
+}
+
+html.dark .qa-input::placeholder { color: #555250 !important; }
+
+/* ── EXAMPLE BANNER ── */
+html.dark .example-banner {
+  background: #1C1C1C !important;
+  border-color: #2A2A2A !important;
+  border-left-color: #8B6914 !important;
+  color: #888480 !important;
+}
+
+/* ── BLIND SPOTS SECTION ── */
+html.dark .blind-spot-item {
+  border-bottom-color: #2A2A2A !important;
+  color: #F0EDE6 !important;
+}
+
+html.dark .blind-spot-item:hover {
+  border-left-color: #CC1C1C !important;
+}
+
+/* ── SHARE BUTTON ── */
+html.dark .share-btn {
+  border-color: #2A2A2A !important;
+  color: #888480 !important;
+}
+
+html.dark .share-btn:hover {
+  border-color: #F0EDE6 !important;
+  color: #F0EDE6 !important;
+}
+
+html.dark .share-btn.copied {
+  border-color: #CC1C1C !important;
+  color: #CC1C1C !important;
+}
+
+/* ── DASHBOARD SIDEBAR ── */
+html.dark .left-sidebar,
+html.dark .sidebar {
+  background: #141414 !important;
+  border-right-color: #2A2A2A !important;
+}
+
+html.dark .section-label-text,
+html.dark .sidebar-section-label {
+  color: #555250 !important;
+}
+
+html.dark .upload-zone {
+  background: #1C1C1C !important;
+  border-color: #3A3A3A !important;
+}
+
+html.dark .upload-zone:hover {
+  border-color: #CC1C1C !important;
+  background: #1C1C1C !important;
+}
+
+html.dark .upload-zone.loaded {
+  border-color: #CC1C1C !important;
+  background: rgba(204,28,28,0.06) !important;
+}
+
+html.dark .upload-zone .doc-label { color: #555250 !important; }
+html.dark .upload-zone .drop-label { color: #3A3A3A !important; }
+html.dark .upload-zone.loaded .filename { color: #CC1C1C !important; }
+
+html.dark .toggle-outer {
+  background: #2A2A2A !important;
+  border-color: #3A3A3A !important;
+}
+
+html.dark .toggle-inner { background: #555250 !important; }
+
+html.dark .toggle-outer.on {
+  background: rgba(204,28,28,0.1) !important;
+  border-color: #CC1C1C !important;
+}
+
+html.dark .toggle-outer.on .toggle-inner {
+  background: #CC1C1C !important;
+}
+
+html.dark .toggle-label { color: #F0EDE6 !important; }
+html.dark .toggle-sublabel { color: #888480 !important; }
+
+html.dark .sensitivity-label { color: #555250 !important; }
+html.dark .sensitivity-value { color: #CC1C1C !important; }
+
+html.dark .run-btn:disabled {
+  background: #1C1C1C !important;
+  color: #3A3A3A !important;
+}
+
+html.dark .run-btn:not(:disabled) {
+  background: #F0EDE6 !important;
+  color: #0D0D0D !important;
+}
+
+html.dark .run-btn:not(:disabled):hover {
+  background: #CC1C1C !important;
+  color: #F0EDE6 !important;
+}
+
+html.dark .session-stat-value { color: #F0EDE6 !important; }
+html.dark .session-stat-label { color: #555250 !important; }
+
+html.dark .divider,
+html.dark hr { border-color: #2A2A2A !important; }
+
+/* ── CANVAS AREAS ── */
+html.dark #hero-canvas,
+html.dark .canvas-area {
+  background: #0D0D0D !important;
+}
+
+html.dark .canvas-btn {
+  border-color: #2A2A2A !important;
+  color: #888480 !important;
+}
+
+html.dark .canvas-btn:hover {
+  border-color: #F0EDE6 !important;
+  color: #F0EDE6 !important;
+}
+
+/* ── STREAM OVERLAY ── */
+html.dark .stream-overlay {
+  background: #0D0D0D !important;
+}
+
+html.dark .stream-step-label { color: #555250 !important; }
+html.dark .stream-progress-track { background: #2A2A2A !important; }
+html.dark .stream-progress-fill { background: #F0EDE6 !important; }
+html.dark .stream-progress-label { color: #888480 !important; }
+html.dark .stream-counter-label { color: #555250 !important; }
+
+/* ── HISTORY PAGE ── */
+html.dark .history-table th {
+  color: #555250 !important;
+  border-bottom-color: #F0EDE6 !important;
+}
+
+html.dark .history-table tr {
+  border-bottom-color: #2A2A2A !important;
+  color: #F0EDE6 !important;
+}
+
+html.dark .history-table tr:hover {
+  background: #1C1C1C !important;
+  box-shadow: inset 3px 0 0 #CC1C1C !important;
+}
+
+html.dark .history-view-btn { color: #888480 !important; }
+
+html.dark .history-view-btn:hover { color: #F0EDE6 !important; }
+
+html.dark .history-share-btn {
+  border-color: #2A2A2A !important;
+  color: #555250 !important;
+}
+
+html.dark .filter-btn {
+  border-color: #2A2A2A !important;
+  color: #555250 !important;
+}
+
+html.dark .filter-btn.active {
+  background: #F0EDE6 !important;
+  color: #0D0D0D !important;
+}
+
+html.dark .clear-history-btn {
+  border-color: #CC1C1C !important;
+  color: #CC1C1C !important;
+}
+
+html.dark .clear-history-btn:hover {
+  background: #CC1C1C !important;
+  color: #F0EDE6 !important;
+}
+
+html.dark .skeleton-box,
+html.dark .ghost-table {
+  background: #141414 !important;
+  border-color: #2A2A2A !important;
+}
+
+html.dark .skeleton-bar {
+  background: #1C1C1C !important;
+}
+
+html.dark .empty-state-text { color: #888480 !important; }
+html.dark .empty-cta-btn {
+  background: #F0EDE6 !important;
+  color: #0D0D0D !important;
+}
+
+html.dark .history-page-title { color: #F0EDE6 !important; }
+html.dark .history-subtitle { color: #888480 !important; }
+
+/* ── HOME PAGE ── */
+html.dark .hero-section { background: #0D0D0D !important; }
+
+html.dark .hero-description { color: #888480 !important; }
+
+html.dark .cta-primary {
+  background: #F0EDE6 !important;
+  color: #0D0D0D !important;
+}
+
+html.dark .cta-primary:hover {
+  background: #CC1C1C !important;
+  color: #F0EDE6 !important;
+}
+
+html.dark .cta-secondary {
+  border-color: #F0EDE6 !important;
+  color: #F0EDE6 !important;
+}
+
+html.dark .cta-secondary:hover {
+  background: #F0EDE6 !important;
+  color: #0D0D0D !important;
+}
+
+html.dark .how-it-works-section {
+  background: #141414 !important;
+}
+
+html.dark .step-number { color: #1C1C1C !important; }
+html.dark .step-title { color: #F0EDE6 !important; }
+html.dark .step-desc { color: #888480 !important; }
+html.dark .step-arrow { color: #3A3A3A !important; }
+html.dark .section-label-heading { color: #555250 !important; }
+
+html.dark .terminal-section { background: #0D0D0D !important; }
+
+html.dark .terminal-right-panel {
+  background: #141414 !important;
+  border-color: #2A2A2A !important;
+}
+
+html.dark .terminal-right-panel .doc-label {
+  color: #555250 !important;
+}
+
+html.dark .example-section { background: #141414 !important; }
+
+html.dark .example-card {
+  background: #141414 !important;
+  border-color: #2A2A2A !important;
+  box-shadow: 3px 3px 0 #1A1A1A !important;
+}
+
+html.dark .example-card .doc-col-label { color: #555250 !important; }
+html.dark .example-card .doc-col-text { color: #F0EDE6 !important; }
+html.dark .example-card .card-bottom {
+  background: #1C1C1C !important;
+  border-top-color: #2A2A2A !important;
+}
+
+html.dark .footer-cta-section { background: #0D0D0D !important; }
+html.dark .footer-cta-label { color: #555250 !important; }
+
+/* ── MULTI-DOC MODE TOGGLE ── */
+html.dark .mode-toggle-btn {
+  border-color: #2A2A2A !important;
+  color: #888480 !important;
+}
+
+html.dark .mode-toggle-btn.active {
+  background: #F0EDE6 !important;
+  color: #0D0D0D !important;
+  border-color: #F0EDE6 !important;
+}
+
+/* ── SCROLLBARS ── */
+html.dark ::-webkit-scrollbar-track {
+  background: #141414 !important;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #2A2A2A !important;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #3A3A3A !important;
+}
+
+/* ── THEME TOGGLE BUTTON ── */
+html.dark .theme-toggle-btn {
+  border-color: #2A2A2A !important;
+  color: #888480 !important;
+}
+
+html.dark .theme-toggle-btn:hover {
+  border-color: #CC1C1C !important;
+  color: #CC1C1C !important;
+}
