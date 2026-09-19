@@ -68,7 +68,8 @@ setTimeout(() => {
     cCtx.clearRect(0, 0, cCanvas.width, cCanvas.height);
     for (let i = 0; i < dots.length; i++) {
       const d = dots[i];
-      cCtx.fillStyle = 'rgba(10, 10, 10, ' + d.alpha + ')';
+      const isDark = document.documentElement.classList.contains('dark');
+      cCtx.fillStyle = isDark ? 'rgba(0, 255, 102, ' + d.alpha + ')' : 'rgba(0, 200, 83, ' + d.alpha + ')';
       cCtx.beginPath();
       cCtx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
       cCtx.fill();
