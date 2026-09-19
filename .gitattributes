@@ -1,0 +1,10 @@
+# Tell GitHub Linguist to exclude these from language stats
+*.html linguist-vendored=true
+*.css linguist-vendored=true
+DAE/templates/* linguist-vendored=true
+DAE/static/style.css linguist-vendored=true
+DAE/static/pixel.css linguist-vendored=true
+
+# Make sure Python and JS are counted
+*.py linguist-detectable=true
+*.js linguist-detectable=true
