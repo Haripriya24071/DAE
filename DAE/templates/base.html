@@ -23,12 +23,14 @@
 
   <!-- NAV BAR -->
   <nav class="top-nav">
-    <a href="/" class="nav-logo">[ DAE ]</a>
-    <div class="nav-links">
-      <a href="/" class="nav-link {% if request.path == '/' or request.path == '/dashboard' %}active{% endif %}">HOME</a>
-      <a href="/dashboard" class="nav-link {% if request.path == '/dashboard' %}active{% endif %}">ANALYSE</a>
-      <a href="/results" class="nav-link {% if request.path == '/results' or request.path == '/result' %}active{% endif %}">RESULTS</a>
-      <a href="/history" class="nav-link {% if request.path == '/history' %}active{% endif %}">HISTORY</a>
+    <div class="nav-left">
+      <a href="/" class="nav-logo">[ DAE ]</a>
+      <div class="nav-links">
+        <a href="/" class="nav-link {% if request.path == '/' or request.path == '/dashboard' %}active{% endif %}">HOME</a>
+        <a href="/dashboard" class="nav-link {% if request.path == '/dashboard' %}active{% endif %}">ANALYSE</a>
+        <a href="/results" class="nav-link {% if request.path == '/results' or request.path == '/result' %}active{% endif %}">RESULTS</a>
+        <a href="/history" class="nav-link {% if request.path == '/history' %}active{% endif %}">HISTORY</a>
+      </div>
     </div>
     <div class="nav-right">
       <button id="theme-toggle" onclick="toggleTheme()" class="theme-toggle-btn">
