@@ -80,3 +80,120 @@ setTimeout(() => {
   }
   requestAnimationFrame(renderTrail);
 })();
+
+// --- SILK AURORA FLOWING BACKGROUND ENGINE ---
+(function() {
+  const canvas = document.getElementById('aurora-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  
+  let width = 0;
+  let height = 0;
+  let mouseX = 0;
+  let mouseY = 0;
+  let targetMouseX = 0;
+  let targetMouseY = 0;
+  
+  function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  window.addEventListener('mousemove', (e) => {
+    targetMouseX = (e.clientX / width - 0.5) * 2;
+    targetMouseY = (e.clientY / height - 0.5) * 2;
+  });
+
+  let time = 0;
+
+  function drawSilkAurora() {
+    time += 0.003;
+    mouseX += (targetMouseX - mouseX) * 0.05;
+    mouseY += (targetMouseY - mouseY) * 0.05;
+
+    const isDark = document.documentElement.classList.contains('dark');
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+
+    // Background gradient fill
+    const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+    if (isDark) {
+      bgGrad.addColorStop(0, '#070907');
+      bgGrad.addColorStop(0.5, '#0C0F0C');
+      bgGrad.addColorStop(1, '#060806');
+    } else {
+      bgGrad.addColorStop(0, '#F5F4EF');
+      bgGrad.addColorStop(0.5, '#EDEBE4');
+      bgGrad.addColorStop(1, '#E5E3DC');
+    }
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, width, height);
+
+    // Aurora Ribbons Setup
+    const numRibbons = 5;
+    const wavePoints = 40;
+
+    for (let r = 0; r < numRibbons; r++) {
+      ctx.beginPath();
+      
+      const speedOffset = time * (0.5 + r * 0.2);
+      const yBase = height * (0.15 + r * 0.16) + mouseY * 35;
+      const alphaMult = isDark ? (0.2 + r * 0.05) : (0.09 + r * 0.02);
+
+      // Ribbon gradient
+      const ribbonGrad = ctx.createLinearGradient(0, 0, width, height);
+      if (isDark) {
+        if (r % 3 === 0) {
+          ribbonGrad.addColorStop(0, `rgba(204, 255, 0, ${0.28 * alphaMult})`);
+          ribbonGrad.addColorStop(0.5, `rgba(0, 230, 118, ${0.38 * alphaMult})`);
+          ribbonGrad.addColorStop(1, `rgba(166, 255, 0, ${0.12 * alphaMult})`);
+        } else if (r % 3 === 1) {
+          ribbonGrad.addColorStop(0, `rgba(166, 255, 0, ${0.32 * alphaMult})`);
+          ribbonGrad.addColorStop(0.5, `rgba(0, 200, 83, ${0.28 * alphaMult})`);
+          ribbonGrad.addColorStop(1, `rgba(204, 255, 0, ${0.18 * alphaMult})`);
+        } else {
+          ribbonGrad.addColorStop(0, `rgba(0, 230, 118, ${0.22 * alphaMult})`);
+          ribbonGrad.addColorStop(0.6, `rgba(204, 255, 0, ${0.35 * alphaMult})`);
+          ribbonGrad.addColorStop(1, `rgba(0, 180, 136, ${0.12 * alphaMult})`);
+        }
+      } else {
+        ribbonGrad.addColorStop(0, `rgba(125, 168, 0, ${0.14 * alphaMult})`);
+        ribbonGrad.addColorStop(0.5, `rgba(76, 175, 80, ${0.12 * alphaMult})`);
+        ribbonGrad.addColorStop(1, `rgba(139, 195, 74, ${0.06 * alphaMult})`);
+      }
+
+      ctx.fillStyle = ribbonGrad;
+
+      // Draw Wave Curve
+      ctx.moveTo(-50, height + 100);
+      for (let i = 0; i <= wavePoints; i++) {
+        const x = (width / wavePoints) * i;
+        const wave1 = Math.sin(i * 0.18 + speedOffset + mouseX * 0.4) * 50;
+        const wave2 = Math.cos(i * 0.12 - speedOffset * 0.7) * 40;
+        const wave3 = Math.sin((i + r) * 0.25 + speedOffset * 1.1) * 25;
+        const y = yBase + wave1 + wave2 + wave3;
+
+        if (i === 0) {
+          ctx.lineTo(x, y);
+        } else {
+          const prevX = (width / wavePoints) * (i - 1);
+          const cpX = (prevX + x) / 2;
+          ctx.quadraticCurveTo(prevX, y, cpX, y);
+        }
+      }
+
+      ctx.lineTo(width + 50, height + 100);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    requestAnimationFrame(drawSilkAurora);
+  }
+
+  requestAnimationFrame(drawSilkAurora);
+})();
