@@ -1,8 +1,24 @@
-venv/
-.env
+# Test PDFs
+*.pdf
+!DAE/doc1.pdf
+!DAE/doc2.pdf
+
+# IDE configs
+pyrightconfig.json
+.vscode/
+.idea/
+
+# Python
 __pycache__/
 *.pyc
-uploads/
-history/
-*.json
-.DS_Store
+*.pyo
+.env
+venv/
+venv*/
+*.egg-info/
+
+# Upload and history folders (runtime data)
+DAE/uploads/*
+DAE/history/*
+!DAE/uploads/.gitkeep
+!DAE/history/.gitkeep
