@@ -76,7 +76,7 @@ def test_analyze():
     
     try:
         llm = ChatGroq(
-            model_name="llama-3.1-8b-instant",
+            model_name="llama3-8b-8192",
             api_key=os.getenv("GROQ_API_KEY")
         )
         response = llm.invoke("Say OK")
@@ -197,7 +197,7 @@ def process_documents(file_a, file_b):
     try:
         emb = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         llm = ChatGroq(
-            model_name="llama-3.1-8b-instant",
+            model_name="llama3-8b-8192",
             api_key=os.getenv("GROQ_API_KEY")
         )
 
@@ -330,7 +330,7 @@ REASON: [One sentence explanation]"""
 def generate_narrative(doc_a_name, doc_b_name, results):
     try:
         llm = ChatGroq(
-            model_name="llama-3.1-8b-instant",
+            model_name="llama3-8b-8192",
             api_key=os.getenv("GROQ_API_KEY")
         )
 
@@ -602,7 +602,7 @@ def analyze_stream():
 
                 # Step 3 — LLM setup
                 llm = ChatGroq(
-                    model_name="llama-3.1-8b-instant",
+                    model_name="llama3-8b-8192",
                     api_key=os.getenv("GROQ_API_KEY")
                 )
                 prompt = PromptTemplate(
@@ -805,7 +805,7 @@ def analyze_multi():
 
         emb = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         llm = ChatGroq(
-            model_name="llama-3.1-8b-instant",
+            model_name="llama3-8b-8192",
             api_key=os.getenv("GROQ_API_KEY")
         )
 
@@ -1086,530 +1086,283 @@ def download_json():
 
 @app.route("/download/pdf")
 def download_pdf():
-    try:
-        from weasyprint import HTML as WeasyHTML, CSS
-        
-        entry_id = request.args.get("id")
-        result_data = None
-        doc_info = {}
-        
-        if entry_id:
-            entry = get_history_by_id(entry_id)
-            if entry:
-                result_data = entry.get("results")
-                doc_info = {
-                    "a": entry.get("doc_a"),
-                    "b": entry.get("doc_b"),
-                    "timestamp": entry.get("timestamp")
-                }
-        if not result_data and "last_result" in session:
-            result_data = session.get("last_result")
+    entry_id = request.args.get("id")
+    result_data = None
+    doc_info = {}
+
+    if entry_id:
+        entry = get_history_by_id(entry_id)
+        if entry:
+            result_data = entry.get("results")
             doc_info = {
-                "a": result_data.get("doc_a", {}).get("name")
-                     if isinstance(result_data.get("doc_a"), dict)
-                     else result_data.get("doc_a"),
-                "b": result_data.get("doc_b", {}).get("name")
-                     if isinstance(result_data.get("doc_b"), dict)
-                     else result_data.get("doc_b")
+                "a": entry.get("doc_a"),
+                "b": entry.get("doc_b"),
+                "timestamp": entry.get("timestamp")
             }
-
-        if not result_data:
-            return "No results found", 404
-
-        narrative = result_data.get("narrative", {})
-        sections = narrative.get("sections", {})
-        contradictions = result_data.get("contradictions", [])
-        agreements = result_data.get("agreements", [])
-        blind_spots_a = result_data.get("blind_spots_a", [])
-        blind_spots_b = result_data.get("blind_spots_b", [])
-        score_range = result_data.get("score_range", {})
-        
-        name_a = doc_info.get("a", "Document A")
-        name_b = doc_info.get("b", "Document B")
-        generated_at = datetime.now().strftime("%d %B %Y, %H:%M")
-
-        severity_order = {"CRITICAL": 0, "SIGNIFICANT": 1, "MINOR": 2}
-
-        html_content = f"""
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500&family=Space+Mono:wght@400;700&display=swap');
-  
-  * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-  
-  body {{
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 11pt;
-    color: #0A0A0A;
-    background: white;
-    line-height: 1.6;
-  }}
-
-  @page {{
-    size: A4;
-    margin: 20mm 15mm;
-    @top-right {{
-      content: "DAE Report — " string(doc-pair);
-      font-family: 'Space Mono', monospace;
-      font-size: 7pt;
-      color: #AAAAAA;
-    }}
-    @bottom-center {{
-      content: counter(page) " / " counter(pages);
-      font-family: 'Space Mono', monospace;
-      font-size: 7pt;
-      color: #AAAAAA;
-    }}
-  }}
-
-  .report-header {{
-    border-bottom: 2px solid #0A0A0A;
-    padding-bottom: 16px;
-    margin-bottom: 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-  }}
-
-  .report-logo {{
-    font-family: 'Space Mono', monospace;
-    font-size: 18pt;
-    font-weight: 700;
-    letter-spacing: 4px;
-    color: #0A0A0A;
-  }}
-
-  .report-meta {{
-    font-family: 'Space Mono', monospace;
-    font-size: 8pt;
-    color: #6B6760;
-    text-align: right;
-    line-height: 1.8;
-  }}
-
-  .doc-pair {{
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    margin-bottom: 24px;
-    padding: 12px 16px;
-    border: 1px solid #D4CFC4;
-    background: #F5F0E8;
-  }}
-
-  .doc-pill {{
-    font-family: 'Space Mono', monospace;
-    font-size: 8pt;
-    padding: 4px 10px;
-    border: 1px solid #C4BFB4;
-    background: white;
-    color: #0A0A0A;
-  }}
-
-  .doc-vs {{
-    font-family: 'Space Mono', monospace;
-    font-size: 8pt;
-    color: #AAAAAA;
-  }}
-
-  .stats-row {{
-    display: flex;
-    gap: 12px;
-    margin-bottom: 24px;
-  }}
-
-  .stat-box {{
-    flex: 1;
-    border: 1px solid #D4CFC4;
-    padding: 12px 14px;
-  }}
-
-  .stat-value {{
-    font-family: 'Space Mono', monospace;
-    font-size: 22pt;
-    font-weight: 700;
-    color: #0A0A0A;
-    display: block;
-  }}
-
-  .stat-value.red {{ color: #CC2200; }}
-  .stat-value.green {{ color: #1A6B00; }}
-
-  .stat-label {{
-    font-family: 'Space Mono', monospace;
-    font-size: 7pt;
-    letter-spacing: 2px;
-    color: #AAAAAA;
-    display: block;
-    margin-top: 4px;
-  }}
-
-  .section-label {{
-    font-family: 'Space Mono', monospace;
-    font-size: 7pt;
-    letter-spacing: 4px;
-    color: #AAAAAA;
-    margin-bottom: 6px;
-    margin-top: 24px;
-    display: block;
-  }}
-
-  .narrative-block {{
-    margin-bottom: 16px;
-    padding-left: 12px;
-    border-left: 3px solid #0A0A0A;
-  }}
-
-  .narrative-block.green {{ border-left-color: #1A6B00; }}
-  .narrative-block.red {{ border-left-color: #CC2200; }}
-  .narrative-block.amber {{ border-left-color: #996600; }}
-
-  .narrative-section-label {{
-    font-family: 'Space Mono', monospace;
-    font-size: 7pt;
-    letter-spacing: 3px;
-    margin-bottom: 6px;
-    display: block;
-  }}
-
-  .narrative-block.green .narrative-section-label {{ color: #1A6B00; }}
-  .narrative-block.red .narrative-section-label {{ color: #CC2200; }}
-  .narrative-block.amber .narrative-section-label {{ color: #996600; }}
-  .narrative-block .narrative-section-label {{ color: #0A0A0A; }}
-
-  .narrative-text {{
-    font-size: 10pt;
-    color: #0A0A0A;
-    line-height: 1.7;
-  }}
-
-  .finding-card {{
-    border: 1px solid #D4CFC4;
-    margin-bottom: 12px;
-    page-break-inside: avoid;
-  }}
-
-  .finding-card-top {{
-    display: flex;
-    gap: 0;
-    border-bottom: 1px solid #E4E0D5;
-  }}
-
-  .finding-col {{
-    flex: 1;
-    padding: 10px 12px;
-  }}
-
-  .finding-col:first-child {{
-    border-right: 1px solid #E4E0D5;
-  }}
-
-  .finding-col-label {{
-    font-family: 'Space Mono', monospace;
-    font-size: 7pt;
-    letter-spacing: 2px;
-    color: #AAAAAA;
-    display: block;
-    margin-bottom: 6px;
-  }}
-
-  .finding-col-text {{
-    font-size: 9pt;
-    color: #0A0A0A;
-    line-height: 1.5;
-  }}
-
-  .finding-card-bottom {{
-    padding: 8px 12px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: #FAFAF8;
-  }}
-
-  .verdict-badge {{
-    font-family: 'Space Mono', monospace;
-    font-size: 7pt;
-    padding: 2px 8px;
-    border: 1px solid;
-  }}
-
-  .badge-disagree {{
-    color: #CC2200;
-    border-color: rgba(204,34,0,0.4);
-    background: rgba(204,34,0,0.06);
-  }}
-
-  .badge-agree {{
-    color: #1A6B00;
-    border-color: rgba(26,107,0,0.4);
-    background: rgba(26,107,0,0.06);
-  }}
-
-  .badge-partial {{
-    color: #996600;
-    border-color: rgba(153,102,0,0.4);
-    background: rgba(153,102,0,0.06);
-  }}
-
-  .severity-badge {{
-    font-family: 'Space Mono', monospace;
-    font-size: 7pt;
-    padding: 2px 8px;
-    border: 1px solid;
-  }}
-
-  .sev-critical {{
-    color: #CC2200;
-    border-color: rgba(204,34,0,0.4);
-    background: rgba(204,34,0,0.06);
-  }}
-
-  .sev-significant {{
-    color: #996600;
-    border-color: rgba(153,102,0,0.4);
-    background: rgba(153,102,0,0.06);
-  }}
-
-  .sev-minor {{
-    color: #1A6B00;
-    border-color: rgba(26,107,0,0.4);
-    background: rgba(26,107,0,0.06);
-  }}
-
-  .confidence-text {{
-    font-family: 'Space Mono', monospace;
-    font-size: 7pt;
-    color: #AAAAAA;
-    margin-left: auto;
-  }}
-
-  .finding-reason {{
-    font-size: 9pt;
-    color: #6B6760;
-    line-height: 1.5;
-  }}
-
-  .blind-spot-cols {{
-    display: flex;
-    gap: 16px;
-    margin-top: 8px;
-  }}
-
-  .blind-spot-col {{
-    flex: 1;
-    border: 1px solid #D4CFC4;
-    padding: 12px;
-  }}
-
-  .blind-spot-col-label {{
-    font-family: 'Space Mono', monospace;
-    font-size: 7pt;
-    letter-spacing: 2px;
-    color: #AAAAAA;
-    display: block;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #E4E0D5;
-    padding-bottom: 6px;
-  }}
-
-  .blind-spot-item {{
-    font-size: 9pt;
-    color: #0A0A0A;
-    line-height: 1.5;
-    padding: 6px 0;
-    border-bottom: 1px solid #F0EDE8;
-  }}
-
-  .blind-spot-item:last-child {{ border-bottom: none; }}
-
-  .similarity-section {{
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    padding: 16px;
-    border: 1px solid #D4CFC4;
-    margin-bottom: 24px;
-    background: #F5F0E8;
-  }}
-
-  .similarity-score {{
-    font-family: 'Space Mono', monospace;
-    font-size: 36pt;
-    font-weight: 700;
-    color: #996600;
-  }}
-
-  .similarity-label {{
-    font-family: 'Space Mono', monospace;
-    font-size: 7pt;
-    letter-spacing: 3px;
-    color: #AAAAAA;
-  }}
-
-  .page-break {{ page-break-before: always; }}
-</style>
-</head>
-<body>
-
-<div class="report-header">
-  <div class="report-logo">[ DAE ]</div>
-  <div class="report-meta">
-    DATA ANALYSER ENGINE<br>
-    Analysis Report<br>
-    {generated_at}
-  </div>
-</div>
-
-<div class="doc-pair">
-  <span class="doc-pill">{name_a}</span>
-  <span class="doc-vs">VS</span>
-  <span class="doc-pill">{name_b}</span>
-</div>
-
-<div class="stats-row">
-  <div class="stat-box">
-    <span class="stat-value {'red' if contradictions else ''}">{len(contradictions)}</span>
-    <span class="stat-label">CONTRADICTIONS</span>
-  </div>
-  <div class="stat-box">
-    <span class="stat-value {'green' if agreements else ''}">{len(agreements)}</span>
-    <span class="stat-label">AGREEMENTS</span>
-  </div>
-  <div class="stat-box">
-    <span class="stat-value">{len(blind_spots_a) + len(blind_spots_b)}</span>
-    <span class="stat-label">BLIND SPOTS</span>
-  </div>
-  <div class="stat-box">
-    <span class="stat-value">{result_data.get('total_chunks_a', 0) + result_data.get('total_chunks_b', 0)}</span>
-    <span class="stat-label">CHUNKS ANALYSED</span>
-  </div>
-</div>
-
-<div class="similarity-section">
-  <div class="similarity-score">{score_range.get('max', 0)}%</div>
-  <div>
-    <div class="similarity-label">SIMILARITY INDEX</div>
-    <div style="font-size:10pt;color:#6B6760;margin-top:4px">
-      Match range: {score_range.get('min', 0)}% — {score_range.get('max', 0)}%
-    </div>
-  </div>
-</div>
-"""
-
-        narrative_colors = {
-            "DOCUMENT OVERVIEW": ("", ""),
-            "KEY FINDINGS": ("green", "green"),
-            "CONTRADICTIONS ANALYSIS": ("red", "red"),
-            "AGREEMENTS ANALYSIS": ("green", "green"),
-            "BLIND SPOTS": ("amber", "amber"),
-            "CONCLUSION": ("", ""),
+    if not result_data and "last_result" in session:
+        result_data = session.get("last_result")
+        doc_info = {
+            "a": result_data.get("doc_a", {}).get("name")
+                 if isinstance(result_data.get("doc_a"), dict)
+                 else result_data.get("doc_a"),
+            "b": result_data.get("doc_b", {}).get("name")
+                 if isinstance(result_data.get("doc_b"), dict)
+                 else result_data.get("doc_b")
         }
 
-        if sections:
-            html_content += '<span class="section-label">ANALYSIS NARRATIVE</span>'
-            for section_name, (block_class, _) in narrative_colors.items():
-                text = sections.get(section_name, "")
-                if text:
-                    html_content += f"""
-<div class="narrative-block {block_class}">
-  <span class="narrative-section-label">{section_name}</span>
-  <div class="narrative-text">{text.replace(chr(10), '<br>')}</div>
-</div>"""
+    if not result_data:
+        return "No results found", 404
 
-        if contradictions:
-            html_content += '<div class="page-break"></div>'
-            html_content += f'<span class="section-label">CONTRADICTIONS ({len(contradictions)} FOUND)</span>'
-            for i, c in enumerate(contradictions, 1):
-                verdict = c.get("verdict", "DISAGREE")
-                severity = c.get("severity", "SIGNIFICANT")
-                confidence = c.get("confidence", 75)
-                
-                badge_class = "badge-disagree" if "DISAGREE" in verdict else \
-                              "badge-agree" if "AGREE" in verdict and "PARTIALLY" not in verdict else \
-                              "badge-partial"
-                sev_class = f"sev-{severity.lower()}"
-                
-                html_content += f"""
-<div class="finding-card">
-  <div class="finding-card-top">
-    <div class="finding-col">
-      <span class="finding-col-label">DOC A</span>
-      <span class="finding-col-text">{c.get('chunk_a', '')[:300]}</span>
-    </div>
-    <div class="finding-col">
-      <span class="finding-col-label">DOC B</span>
-      <span class="finding-col-text">{c.get('chunk_b', '')[:300]}</span>
-    </div>
-  </div>
-  <div class="finding-card-bottom">
-    <span class="verdict-badge {badge_class}">{verdict}</span>
-    <span class="severity-badge {sev_class}">{severity}</span>
-    <span class="finding-reason">{c.get('reason', '')}</span>
-    <span class="confidence-text">{confidence}% confidence</span>
-  </div>
-</div>"""
+    name_a = doc_info.get("a", "Document A")
+    name_b = doc_info.get("b", "Document B")
+    contradictions = result_data.get("contradictions", [])
+    agreements = result_data.get("agreements", [])
+    blind_spots_a = result_data.get("blind_spots_a", [])
+    blind_spots_b = result_data.get("blind_spots_b", [])
+    narrative = result_data.get("narrative", {})
+    sections = narrative.get("sections", {}) if narrative else {}
+    score_range = result_data.get("score_range", {})
+    generated_at = datetime.now().strftime("%d %B %Y, %H:%M")
 
-        if agreements:
-            html_content += f'<span class="section-label">AGREEMENTS ({len(agreements)} FOUND)</span>'
-            for i, a in enumerate(agreements, 1):
-                verdict = a.get("verdict", "AGREE")
-                confidence = a.get("confidence", 75)
-                badge_class = "badge-agree" if "AGREE" in verdict and "PARTIALLY" not in verdict else "badge-partial"
-                html_content += f"""
-<div class="finding-card">
-  <div class="finding-card-top">
-    <div class="finding-col">
-      <span class="finding-col-label">DOC A</span>
-      <span class="finding-col-text">{a.get('chunk_a', '')[:300]}</span>
-    </div>
-    <div class="finding-col">
-      <span class="finding-col-label">DOC B</span>
-      <span class="finding-col-text">{a.get('chunk_b', '')[:300]}</span>
-    </div>
-  </div>
-  <div class="finding-card-bottom">
-    <span class="verdict-badge {badge_class}">{verdict}</span>
-    <span class="finding-reason">{a.get('reason', '')}</span>
-    <span class="confidence-text">{confidence}% confidence</span>
-  </div>
-</div>"""
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import mm
+        from reportlab.lib import colors
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+        from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
+        import io
 
-        if blind_spots_a or blind_spots_b:
-            html_content += f'<span class="section-label">BLIND SPOTS</span>'
-            html_content += '<div class="blind-spot-cols">'
-            html_content += f'<div class="blind-spot-col"><span class="blind-spot-col-label">ONLY IN {name_a[:30]}</span>'
-            for b in blind_spots_a:
-                html_content += f'<div class="blind-spot-item">{b}</div>'
-            html_content += '</div>'
-            html_content += f'<div class="blind-spot-col"><span class="blind-spot-col-label">ONLY IN {name_b[:30]}</span>'
-            for b in blind_spots_b:
-                html_content += f'<div class="blind-spot-item">{b}</div>'
-            html_content += '</div></div>'
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=15*mm,
+            leftMargin=15*mm,
+            topMargin=20*mm,
+            bottomMargin=20*mm
+        )
 
-        html_content += "</body></html>"
+        styles = getSampleStyleSheet()
+        story = []
 
-        pdf_bytes = WeasyHTML(string=html_content).write_pdf()
+        # Custom styles
+        title_style = ParagraphStyle('title',
+            fontName='Helvetica-Bold', fontSize=24,
+            textColor=colors.HexColor('#0A0A0A'),
+            spaceAfter=4)
         
+        meta_style = ParagraphStyle('meta',
+            fontName='Courier', fontSize=8,
+            textColor=colors.HexColor('#6B6760'),
+            spaceAfter=2)
+        
+        section_label_style = ParagraphStyle('section_label',
+            fontName='Courier-Bold', fontSize=7,
+            textColor=colors.HexColor('#AAAAAA'),
+            spaceBefore=16, spaceAfter=6,
+            leading=10)
+        
+        body_style = ParagraphStyle('body',
+            fontName='Helvetica', fontSize=10,
+            textColor=colors.HexColor('#0A0A0A'),
+            leading=15, spaceAfter=6)
+        
+        small_style = ParagraphStyle('small',
+            fontName='Courier', fontSize=8,
+            textColor=colors.HexColor('#6B6760'),
+            leading=12, spaceAfter=4)
+        
+        red_style = ParagraphStyle('red',
+            fontName='Courier-Bold', fontSize=8,
+            textColor=colors.HexColor('#CC1C1C'))
+        
+        green_style = ParagraphStyle('green',
+            fontName='Courier-Bold', fontSize=8,
+            textColor=colors.HexColor('#00C853'))
+
+        # Header
+        story.append(Paragraph("[ DAE ]", title_style))
+        story.append(Paragraph("DATA ANALYSER ENGINE — Analysis Report", meta_style))
+        story.append(Paragraph(f"Generated: {generated_at}", meta_style))
+        story.append(HRFlowable(width="100%", thickness=1.5,
+            color=colors.HexColor('#0A0A0A'), spaceAfter=12))
+
+        # Document pair
+        story.append(Paragraph("DOCUMENTS COMPARED", section_label_style))
+        doc_data = [[
+            Paragraph(name_a[:50], small_style),
+            Paragraph("VS", ParagraphStyle('vs', fontName='Courier',
+                fontSize=8, textColor=colors.HexColor('#AAAAAA'),
+                alignment=TA_CENTER)),
+            Paragraph(name_b[:50], small_style)
+        ]]
+        doc_table = Table(doc_data, colWidths=['45%', '10%', '45%'])
+        doc_table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#F5F0E8')),
+            ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#D4CFC4')),
+            ('PADDING', (0,0), (-1,-1), 8),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ]))
+        story.append(doc_table)
+        story.append(Spacer(1, 12))
+
+        # Stats
+        story.append(Paragraph("ANALYSIS SUMMARY", section_label_style))
+        stats_data = [[
+            Paragraph(f"<b>{len(contradictions)}</b><br/>CONTRADICTIONS",
+                ParagraphStyle('stat', fontName='Courier', fontSize=9,
+                textColor=colors.HexColor('#CC1C1C' if contradictions else '#AAAAAA'),
+                alignment=TA_CENTER, leading=14)),
+            Paragraph(f"<b>{len(agreements)}</b><br/>AGREEMENTS",
+                ParagraphStyle('stat', fontName='Courier', fontSize=9,
+                textColor=colors.HexColor('#00C853' if agreements else '#AAAAAA'),
+                alignment=TA_CENTER, leading=14)),
+            Paragraph(f"<b>{len(blind_spots_a)+len(blind_spots_b)}</b><br/>BLIND SPOTS",
+                ParagraphStyle('stat', fontName='Courier', fontSize=9,
+                textColor=colors.HexColor('#8B6914'),
+                alignment=TA_CENTER, leading=14)),
+            Paragraph(f"<b>{score_range.get('max',0)}%</b><br/>SIMILARITY",
+                ParagraphStyle('stat', fontName='Courier', fontSize=9,
+                textColor=colors.HexColor('#0A0A0A'),
+                alignment=TA_CENTER, leading=14)),
+        ]]
+        stats_table = Table(stats_data, colWidths=['25%','25%','25%','25%'])
+        stats_table.setStyle(TableStyle([
+            ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#D4CFC4')),
+            ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#D4CFC4')),
+            ('PADDING', (0,0), (-1,-1), 10),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ]))
+        story.append(stats_table)
+        story.append(Spacer(1, 12))
+
+        # Narrative sections
+        section_order = [
+            ("DOCUMENT OVERVIEW", "#0A0A0A"),
+            ("KEY FINDINGS", "#00C853"),
+            ("CONTRADICTIONS ANALYSIS", "#CC1C1C"),
+            ("AGREEMENTS ANALYSIS", "#00C853"),
+            ("BLIND SPOTS", "#8B6914"),
+            ("CONCLUSION", "#0A0A0A"),
+        ]
+        
+        has_narrative = False
+        for sec_name, sec_color in section_order:
+            text = sections.get(sec_name, "")
+            if text:
+                if not has_narrative:
+                    story.append(Paragraph("ANALYSIS NARRATIVE", section_label_style))
+                    has_narrative = True
+                story.append(Paragraph(sec_name, ParagraphStyle('sec',
+                    fontName='Courier-Bold', fontSize=7,
+                    textColor=colors.HexColor(sec_color),
+                    spaceBefore=8, spaceAfter=4)))
+                story.append(Paragraph(text.replace('\n', '<br/>'), body_style))
+                story.append(HRFlowable(width="100%", thickness=0.3,
+                    color=colors.HexColor('#E4E0D5'), spaceAfter=4))
+
+        # Contradictions
+        if contradictions:
+            story.append(Paragraph(
+                f"CONTRADICTIONS ({len(contradictions)} FOUND)",
+                section_label_style))
+            for i, c in enumerate(contradictions, 1):
+                verdict = c.get('verdict', 'DISAGREE')
+                severity = c.get('severity', 'SIGNIFICANT')
+                confidence = c.get('confidence', 75)
+                
+                finding_data = [[
+                    Paragraph(f"<b>DOC A</b><br/>{c.get('chunk_a','')[:250]}",
+                        small_style),
+                    Paragraph(f"<b>DOC B</b><br/>{c.get('chunk_b','')[:250]}",
+                        small_style)
+                ]]
+                finding_table = Table(finding_data, colWidths=['50%','50%'])
+                finding_table.setStyle(TableStyle([
+                    ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#D4CFC4')),
+                    ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#E4E0D5')),
+                    ('PADDING', (0,0), (-1,-1), 8),
+                    ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                    ('LINEABOVE', (0,0), (-1,0), 2,
+                        colors.HexColor('#CC1C1C')),
+                ]))
+                story.append(finding_table)
+                story.append(Paragraph(
+                    f"{verdict} · {severity} · {confidence}% confidence · {c.get('reason','')}",
+                    small_style))
+                story.append(Spacer(1, 6))
+
+        # Agreements
+        if agreements:
+            story.append(Paragraph(
+                f"AGREEMENTS ({len(agreements)} FOUND)",
+                section_label_style))
+            for i, a in enumerate(agreements, 1):
+                verdict = a.get('verdict', 'AGREE')
+                confidence = a.get('confidence', 75)
+                finding_data = [[
+                    Paragraph(f"<b>DOC A</b><br/>{a.get('chunk_a','')[:200]}",
+                        small_style),
+                    Paragraph(f"<b>DOC B</b><br/>{a.get('chunk_b','')[:200]}",
+                        small_style)
+                ]]
+                finding_table = Table(finding_data, colWidths=['50%','50%'])
+                finding_table.setStyle(TableStyle([
+                    ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#D4CFC4')),
+                    ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#E4E0D5')),
+                    ('PADDING', (0,0), (-1,-1), 8),
+                    ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                    ('LINEABOVE', (0,0), (-1,0), 2,
+                        colors.HexColor('#00C853')),
+                ]))
+                story.append(finding_table)
+                story.append(Paragraph(
+                    f"{verdict} · {confidence}% confidence · {a.get('reason','')}",
+                    small_style))
+                story.append(Spacer(1, 6))
+
+        # Blind spots
+        if blind_spots_a or blind_spots_b:
+            story.append(Paragraph("BLIND SPOTS", section_label_style))
+            bs_data = [[
+                Paragraph(f"<b>ONLY IN {name_a[:25]}</b><br/>" +
+                    "<br/>".join(f"· {b}" for b in blind_spots_a),
+                    small_style),
+                Paragraph(f"<b>ONLY IN {name_b[:25]}</b><br/>" +
+                    "<br/>".join(f"· {b}" for b in blind_spots_b),
+                    small_style)
+            ]]
+            bs_table = Table(bs_data, colWidths=['50%','50%'])
+            bs_table.setStyle(TableStyle([
+                ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#D4CFC4')),
+                ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#E4E0D5')),
+                ('PADDING', (0,0), (-1,-1), 8),
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ]))
+            story.append(bs_table)
+
+        doc.build(story)
+        buffer.seek(0)
         timestamp = int(datetime.now().timestamp())
+
         return Response(
-            pdf_bytes,
+            buffer.getvalue(),
             mimetype="application/pdf",
             headers={
-                "Content-Disposition": 
+                "Content-Disposition":
                     f"attachment; filename=dae-report-{timestamp}.pdf",
                 "Content-Type": "application/pdf"
             }
         )
 
     except ImportError:
-        return "WeasyPrint not installed. Run: pip install weasyprint", 500
+        return "ReportLab not installed. Run: pip install reportlab", 500
     except Exception as e:
         logging.error(f"PDF generation error: {e}")
         return f"PDF generation failed: {str(e)}", 500
+
+
 
 @app.route("/ask", methods=["POST"])
 def ask():
@@ -1674,7 +1427,7 @@ CONTRADICTIONS FOUND ({len(contradictions)}):"""
                 context += f"\n\nDOCUMENT OVERVIEW: {overview}"
 
         llm = ChatGroq(
-            model_name="llama-3.1-8b-instant",
+            model_name="llama3-8b-8192",
             api_key=os.getenv("GROQ_API_KEY")
         )
 
