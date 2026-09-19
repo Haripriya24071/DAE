@@ -1,8 +1,0 @@
-[tool.pyright]
-venvPath = "."
-venv = "venv"
-extraPaths = ["venv/Lib/site-packages", "DAE"]
-
-[tool.pyrefly]
-python-path = "venv/Scripts/python.exe"
-search-paths = ["venv/Lib/site-packages", "DAE"]
