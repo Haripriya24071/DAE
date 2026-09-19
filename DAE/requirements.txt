@@ -9,5 +9,5 @@ langchain-huggingface
 langchain-community
 faiss-cpu
 sentence-transformers
-weasyprint
+reportlab
 python-docx
