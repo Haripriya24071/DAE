@@ -18,13 +18,7 @@
     <!-- TOP LABEL -->
     <div class="sidebar-top-label">
       <div class="top-title">ANALYSER</div>
-      <div class="top-subtitle">Upload 2 to 5 PDFs to compare</div>
-    </div>
-
-    <!-- MODE TOGGLE -->
-    <div class="mode-toggle-bar">
-      <button class="mode-btn active" id="mode-standard" onclick="setMode('standard')">[2 DOCUMENTS]</button>
-      <button class="mode-btn" id="mode-multi" onclick="setMode('multi')">[MULTI 3-5]</button>
+      <div class="top-subtitle">Upload 2 PDFs to compare</div>
     </div>
 
     <!-- SECTION 01 — LOAD DOCUMENTS -->
@@ -59,29 +53,6 @@
         </div>
         <input type="file" id="file-2" name="doc_b" accept=".pdf,.docx,.txt" style="display:none">
       </div>
-    </div>
-
-    <!-- MULTI 3-5 DOC ZONES -->
-    <div id="zones-multi" style="display:none;">
-      {% for slot in range(1, 6) %}
-      <div class="upload-zone" id="multi-zone-{{ slot }}" data-slot="{{ slot }}" style="height: 64px; margin-bottom: 8px;">
-        <button class="remove-file-btn multi-remove-btn" data-slot="{{ slot }}">✕</button>
-        <div class="empty-state-view" id="multi-empty-view-{{ slot }}" style="display:flex; flex-direction:column; align-items:center;">
-          <div class="css-doc-icon" style="height:14px; width:12px;"></div>
-          <div class="upload-title-empty" style="font-size:8px; margin-top:2px;">DOCUMENT 0{{ slot }}</div>
-          {% if slot > 2 %}
-            <div class="upload-sub-empty" style="font-size:7px; color:#AAAAAA;">OPTIONAL</div>
-          {% else %}
-            <div class="upload-sub-empty" style="font-size:7px;">DROP PDF / DOCX / TXT</div>
-          {% endif %}
-        </div>
-        <div class="loaded-state-view" id="multi-loaded-view-{{ slot }}" style="display:none; flex-direction:column; align-items:center;">
-          <div class="upload-filename-loaded" id="multi-filename-{{ slot }}">doc{{ slot }}.pdf</div>
-          <div class="upload-size-loaded" id="multi-filesize-{{ slot }}">145 KB</div>
-        </div>
-        <input type="file" id="multi-file-{{ slot }}" name="doc_{{ slot }}" accept=".pdf,.docx,.txt" style="display:none">
-      </div>
-      {% endfor %}
     </div>
 
     <div class="divider"></div>
