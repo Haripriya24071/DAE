@@ -544,7 +544,7 @@ def analyze_stream():
     file_b = request.files["doc_b"]
     
     if not allowed_file(file_a.filename) or not allowed_file(file_b.filename):
-        return jsonify({"error": "Only PDF, DOCX, and TXT files supported"}), 400
+        return jsonify({"error": "Only PDF, DOCX, TXT files supported"}), 400
     
     name_a = secure_filename(file_a.filename)
     name_b = secure_filename(file_b.filename)
