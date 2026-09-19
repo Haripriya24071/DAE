@@ -14,7 +14,7 @@
   resizeH();
 
   const labels = [
-    { text: "CONTRADICTION DETECTED", color: "#CC1C1C" },
+    { text: "CONTRADICTION DETECTED", color: "#00FF66" },
     { text: "AGREEMENT FOUND", color: "#0A0A0A" },
     { text: "BLIND SPOT", color: "#8B6914" }
   ];
