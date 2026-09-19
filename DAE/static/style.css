@@ -52,6 +52,17 @@ body {
   flex-direction: column;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+#aurora-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: -2;
 }
 
 /* Allowed Shadow: 3px 3px 0px #D0CBC2 only */
