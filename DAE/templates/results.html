@@ -70,7 +70,7 @@
 
   {% set worst_color = '#1A6B00' %}
   {% if critical_count > 0 %}
-    {% set worst_color = '#CC2200' %}
+    {% set worst_color = '#00C853' %}
   {% elif significant_count > 0 %}
     {% set worst_color = '#996600' %}
   {% endif %}
@@ -120,7 +120,7 @@
               {% for section_name, section_color in [
                 ('DOCUMENT OVERVIEW', '#0A0A0A'),
                 ('KEY FINDINGS', '#1A6B00'),
-                ('CONTRADICTIONS ANALYSIS', '#CC2200'),
+                ('CONTRADICTIONS ANALYSIS', '#00C853'),
                 ('AGREEMENTS ANALYSIS', '#1A6B00'),
                 ('BLIND SPOTS', '#996600'),
                 ('CONCLUSION', '#0A0A0A')
@@ -152,7 +152,7 @@
       <!-- TAB CONTENT — CONTRADICTIONS -->
       <div class="tab-pane active" id="tab-contradictions">
         <div style="font-family: 'Space Mono', monospace; font-size: 9px; color: #AAAAAA; letter-spacing: 2px; margin-bottom: 12px; display: flex; gap: 16px;">
-          <span><strong style="color: #CC2200;">● CRITICAL:</strong> {{ critical_count }}</span>
+          <span><strong style="color: #00C853;">● CRITICAL:</strong> {{ critical_count }}</span>
           <span><strong style="color: #996600;">◆ SIGNIFICANT:</strong> {{ significant_count }}</span>
           <span><strong style="color: #1A6B00;">▸ MINOR:</strong> {{ minor_count }}</span>
         </div>
