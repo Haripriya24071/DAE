@@ -3172,3 +3172,271 @@ html.dark .page-content,
 html.dark .inner-wrap {
   background: #0D0D0D !important;
 }
+
+
+/* ─────────────────────────────────────────────────────────────
+   GLOBAL SILK AURORA & ZERO-PATCH PURE DARK MODE OVERRIDES
+   ───────────────────────────────────────────────────────────── */
+
+/* Page wrappers background transparency to reveal Aurora canvas */
+.history-page-wrapper,
+.history-container,
+.dashboard-wrapper,
+.home-scroll-container,
+.results-main-wrapper,
+.main-content-split,
+.panel-left-content,
+.app-main {
+  background: transparent !important;
+}
+
+/* Navbar glassmorphism */
+nav.top-nav {
+  background: rgba(253, 252, 250, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+html.dark nav.top-nav {
+  background: rgba(8, 8, 8, 0.88) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(34, 34, 34, 0.8) !important;
+}
+
+/* History Page Dark Overrides */
+html.dark .table-box {
+  background: rgba(10, 10, 10, 0.9) !important;
+  border: 1px solid #222222 !important;
+  box-shadow: 3px 3px 0 #000000 !important;
+}
+
+html.dark table.history-table {
+  background: transparent !important;
+}
+
+html.dark table.history-table thead {
+  background: #0D0D0D !important;
+  border-bottom: 2px solid #222222 !important;
+}
+
+html.dark table.history-table th {
+  color: #888888 !important;
+  background: #0D0D0D !important;
+}
+
+html.dark table.history-table tr.history-data-row {
+  background: #0A0A0A !important;
+  border-bottom: 1px solid #1A1A1A !important;
+}
+
+html.dark table.history-table tr.history-data-row:hover {
+  background: #141414 !important;
+  box-shadow: inset 3px 0 0 #CCFF00 !important;
+}
+
+html.dark table.history-table td {
+  color: #F0EDE6 !important;
+  background: transparent !important;
+}
+
+html.dark .col-docname,
+html.dark .col-timestamp {
+  color: #F0EDE6 !important;
+}
+
+html.dark .action-view-link {
+  color: #CCFF00 !important;
+}
+
+html.dark .history-share-btn {
+  background: transparent !important;
+  color: #AAAAAA !important;
+  border-color: #333333 !important;
+}
+
+html.dark .history-share-btn:hover {
+  border-color: #CCFF00 !important;
+  color: #CCFF00 !important;
+}
+
+html.dark .empty-history-wrapper {
+  background: rgba(10, 10, 10, 0.9) !important;
+  border-color: #222222 !important;
+  color: #F0EDE6 !important;
+}
+
+html.dark .filter-btn {
+  background: #0A0A0A !important;
+  color: #AAAAAA !important;
+  border-color: #222222 !important;
+}
+
+html.dark .filter-btn.active {
+  background: #CCFF00 !important;
+  color: #000000 !important;
+  border-color: #CCFF00 !important;
+}
+
+html.dark .btn-clear-history {
+  background: transparent !important;
+  color: #888888 !important;
+  border-color: #222222 !important;
+}
+
+html.dark .btn-clear-history:hover {
+  color: #CCFF00 !important;
+  border-color: #CCFF00 !important;
+}
+
+/* Results Page Dark Overrides */
+html.dark .res-item-card {
+  background: rgba(10, 10, 10, 0.9) !important;
+  border: 1px solid #222222 !important;
+  box-shadow: 3px 3px 0 #000000 !important;
+  color: #F0EDE6 !important;
+}
+
+html.dark .card-top-cols,
+html.dark .card-col-half {
+  border-color: #222222 !important;
+}
+
+html.dark .excerpt-text-heatmap {
+  color: #F0EDE6 !important;
+}
+
+html.dark .confidence-indicator,
+html.dark .micro-stats-row {
+  background: #0D0D0D !important;
+  border-color: #222222 !important;
+  color: #888888 !important;
+}
+
+html.dark .card-bottom-strip {
+  background: #0D0D0D !important;
+  border-color: #222222 !important;
+}
+
+html.dark .card-bottom-strip.agree-strip {
+  background: rgba(204, 255, 0, 0.05) !important;
+}
+
+html.dark .verdict-reason-text {
+  color: #D0D0D0 !important;
+}
+
+html.dark .blind-col-box {
+  background: rgba(10, 10, 10, 0.9) !important;
+  border: 1px solid #222222 !important;
+  color: #F0EDE6 !important;
+}
+
+html.dark .blind-col-title {
+  color: #CCFF00 !important;
+  border-color: #222222 !important;
+}
+
+html.dark .blind-item {
+  color: #F0EDE6 !important;
+  border-color: #1A1A1A !important;
+}
+
+html.dark .panel-right-summary {
+  background: rgba(10, 10, 10, 0.9) !important;
+  border-left: 1px solid #222222 !important;
+}
+
+html.dark .meter-bar-track {
+  background: #1A1A1A !important;
+}
+
+html.dark .meter-score-num {
+  color: #CCFF00 !important;
+}
+
+html.dark .qs-val {
+  color: #F0EDE6 !important;
+}
+
+html.dark .panel-divider,
+html.dark .quick-stat-row {
+  border-color: #222222 !important;
+}
+
+html.dark .tab-btn {
+  background: #0A0A0A !important;
+  color: #888888 !important;
+  border-color: #222222 !important;
+}
+
+html.dark .tab-btn.active {
+  background: #CCFF00 !important;
+  color: #000000 !important;
+  border-color: #CCFF00 !important;
+}
+
+/* Dashboard Page Dark Overrides */
+html.dark .left-sidebar {
+  background: rgba(10, 10, 10, 0.9) !important;
+  border-right: 1px solid #222222 !important;
+}
+
+html.dark .upload-zone {
+  background: #0A0A0A !important;
+  border-color: #222222 !important;
+}
+
+html.dark .upload-title-empty {
+  color: #F0EDE6 !important;
+}
+
+html.dark .upload-filename-loaded {
+  color: #CCFF00 !important;
+}
+
+html.dark .toggle-row {
+  background: #0A0A0A !important;
+  border-color: #222222 !important;
+}
+
+html.dark .toggle-main-label {
+  color: #F0EDE6 !important;
+}
+
+html.dark .square-switch {
+  background: #1A1A1A !important;
+  border-color: #333333 !important;
+}
+
+html.dark .toggle-row[data-on="true"] .square-switch {
+  background: #CCFF00 !important;
+}
+
+html.dark .btn-cta-start,
+html.dark .btn-cta-primary {
+  background: #CCFF00 !important;
+  color: #000000 !important;
+}
+
+/* Universal Dark Mode Input & Select Fix */
+html.dark input,
+html.dark select,
+html.dark textarea,
+html.dark button {
+  border-color: #222222;
+}
+
+/* Ensure no light backgrounds on any dark mode elements */
+html.dark [style*="background: white"],
+html.dark [style*="background: #fff"],
+html.dark [style*="background: #FFF"],
+html.dark [style*="background:#fff"],
+html.dark [style*="background:#FFF"],
+html.dark [style*="background-color: white"],
+html.dark [style*="background-color: #fff"],
+html.dark [style*="background-color: #EFEDE8"],
+html.dark [style*="background-color: #FDFCFA"] {
+  background: #0A0A0A !important;
+  color: #F0EDE6 !important;
+}
