@@ -1471,4 +1471,4 @@ if __name__ == "__main__":
     os.makedirs("history", exist_ok=True)
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
     os.makedirs(app.config["HISTORY_FOLDER"], exist_ok=True)
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
