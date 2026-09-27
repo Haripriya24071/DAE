@@ -143,28 +143,28 @@ setTimeout(() => {
       
       const speedOffset = time * (0.6 + r * 0.2);
       const yBase = height * (0.1 + r * 0.15) + mouseY * 45;
-      const alphaMult = isDark ? (0.7 + r * 0.08) : (0.2 + r * 0.04);
+      const alphaMult = isDark ? (0.08 + r * 0.02) : (0.08 + r * 0.02);
 
       // Ribbon gradient
       const ribbonGrad = ctx.createLinearGradient(0, 0, width, height);
       if (isDark) {
         if (r % 3 === 0) {
-          ribbonGrad.addColorStop(0, `rgba(204, 255, 0, ${0.45 * alphaMult})`);
-          ribbonGrad.addColorStop(0.5, `rgba(0, 230, 118, ${0.55 * alphaMult})`);
-          ribbonGrad.addColorStop(1, `rgba(166, 255, 0, ${0.2 * alphaMult})`);
+          ribbonGrad.addColorStop(0, `rgba(204, 255, 0, ${0.15 * alphaMult})`);
+          ribbonGrad.addColorStop(0.5, `rgba(0, 230, 118, ${0.2 * alphaMult})`);
+          ribbonGrad.addColorStop(1, `rgba(166, 255, 0, ${0.08 * alphaMult})`);
         } else if (r % 3 === 1) {
-          ribbonGrad.addColorStop(0, `rgba(166, 255, 0, ${0.5 * alphaMult})`);
-          ribbonGrad.addColorStop(0.5, `rgba(0, 200, 83, ${0.4 * alphaMult})`);
-          ribbonGrad.addColorStop(1, `rgba(204, 255, 0, ${0.25 * alphaMult})`);
+          ribbonGrad.addColorStop(0, `rgba(166, 255, 0, ${0.18 * alphaMult})`);
+          ribbonGrad.addColorStop(0.5, `rgba(0, 200, 83, ${0.15 * alphaMult})`);
+          ribbonGrad.addColorStop(1, `rgba(204, 255, 0, ${0.1 * alphaMult})`);
         } else {
-          ribbonGrad.addColorStop(0, `rgba(0, 230, 118, ${0.35 * alphaMult})`);
-          ribbonGrad.addColorStop(0.6, `rgba(204, 255, 0, ${0.5 * alphaMult})`);
-          ribbonGrad.addColorStop(1, `rgba(0, 180, 136, ${0.2 * alphaMult})`);
+          ribbonGrad.addColorStop(0, `rgba(0, 230, 118, ${0.12 * alphaMult})`);
+          ribbonGrad.addColorStop(0.6, `rgba(204, 255, 0, ${0.18 * alphaMult})`);
+          ribbonGrad.addColorStop(1, `rgba(0, 180, 136, ${0.08 * alphaMult})`);
         }
       } else {
-        ribbonGrad.addColorStop(0, `rgba(125, 168, 0, ${0.2 * alphaMult})`);
-        ribbonGrad.addColorStop(0.5, `rgba(76, 175, 80, ${0.18 * alphaMult})`);
-        ribbonGrad.addColorStop(1, `rgba(139, 195, 74, ${0.1 * alphaMult})`);
+        ribbonGrad.addColorStop(0, `rgba(125, 168, 0, ${0.1 * alphaMult})`);
+        ribbonGrad.addColorStop(0.5, `rgba(76, 175, 80, ${0.08 * alphaMult})`);
+        ribbonGrad.addColorStop(1, `rgba(139, 195, 74, ${0.05 * alphaMult})`);
       }
 
       ctx.fillStyle = ribbonGrad;

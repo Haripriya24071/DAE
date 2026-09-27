@@ -3475,3 +3475,62 @@ html.dark #vortex-canvas {
   overflow: hidden;
 }
 
+/* ── DARK MODE UI CONTRAST & ACCESSIBILITY FIXES ── */
+
+/* 1. White Box Fix for File Pills */
+html.dark .file-pill {
+  background: #181818 !important;
+  border: 1px solid #333333 !important;
+  color: #CCFF00 !important;
+}
+
+/* 2. Top Action & Share Buttons (PDF, JSON, TXT, PRINT) */
+html.dark .action-btn-top {
+  border: 1px solid #333333 !important;
+  color: #E0E0E0 !important;
+  background: #141414 !important;
+}
+html.dark .action-btn-top:hover:not(.disabled) {
+  background: #CCFF00 !important;
+  color: #0A0A0A !important;
+  border-color: #CCFF00 !important;
+}
+html.dark .action-btn-top.disabled {
+  color: #777777 !important;
+  border-color: #262626 !important;
+  background: #111111 !important;
+  opacity: 0.6 !important;
+}
+html.dark .share-btn {
+  background: #181818 !important;
+  border: 1px solid #333333 !important;
+  color: #CCFF00 !important;
+}
+
+/* 3. Analysis Excerpt & Token Visibility Fixes */
+html.dark .excerpt-text-heatmap {
+  color: #F0EDE6 !important;
+}
+html.dark .token-span {
+  color: #F0EDE6 !important;
+}
+html.dark .token-span.warm {
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: #F0EDE6 !important;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+}
+html.dark .token-span.cool {
+  background: rgba(255, 255, 255, 0.03) !important;
+  color: #DDDDDD !important;
+}
+html.dark .token-span.cold {
+  background: transparent !important;
+  color: #F0EDE6 !important;
+}
+html.dark .token-span.hot {
+  background: rgba(204, 255, 0, 0.18) !important;
+  color: #CCFF00 !important;
+  border-bottom: 1.5px solid #CCFF00 !important;
+}
+
+
