@@ -11,3 +11,5 @@ faiss-cpu
 sentence-transformers
 reportlab
 python-docx
+gunicorn
+
