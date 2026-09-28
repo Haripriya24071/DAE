@@ -82,7 +82,7 @@ function setMultiSlotFile(slotNum, file) {
   
   const ext = file.name.split('.').pop().toUpperCase();
   const extColors = {PDF: '#CC1C1C', DOCX: '#0A0A0A', TXT: '#6B6760'};
-  if (sizeEl) sizeEl.innerHTML = `<span style="font-family:'Space Mono',monospace; font-size:8px; font-weight:bold; color:${extColors[ext] || '#6B6760'}; margin-right:6px;">${ext}</span>${formatSize(file.size)}`;
+  if (sizeEl) sizeEl.innerHTML = `<span style="font-family:'Space Mono',monospace; font-size:8.16px; font-weight:bold; color:${extColors[ext] || '#6B6760'}; margin-right:6px;">${ext}</span>${formatSize(file.size)}`;
 
   updateDocsLoadedStat();
   checkReadyState();
@@ -311,7 +311,7 @@ function setSlotFile(slotNum, file) {
 
   const ext = file.name.split('.').pop().toUpperCase();
   const extColors = {PDF: '#CC1C1C', DOCX: '#0A0A0A', TXT: '#6B6760'};
-  sizeEl.innerHTML = `<span style="font-family:'Space Mono',monospace; font-size:8px; font-weight:bold; color:${extColors[ext] || '#6B6760'}; margin-right:6px;">${ext}</span>${formatSize(file.size)}`;
+  sizeEl.innerHTML = `<span style="font-family:'Space Mono',monospace; font-size:8.16px; font-weight:bold; color:${extColors[ext] || '#6B6760'}; margin-right:6px;">${ext}</span>${formatSize(file.size)}`;
 
   updateDocsLoadedStat();
   checkReadyState();

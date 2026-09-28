@@ -89,7 +89,7 @@
 
       <!-- TAB CONTENT — CONTRADICTIONS -->
       <div class="tab-pane active" id="tab-contradictions">
-        <div style="font-family: 'Space Mono', monospace; font-size: 9px; color: #AAAAAA; letter-spacing: 2px; margin-bottom: 12px; display: flex; gap: 16px;">
+        <div style="font-family: 'Space Mono', monospace; font-size: 9.18px; color: #AAAAAA; letter-spacing: 2px; margin-bottom: 12px; display: flex; gap: 16px;">
           <span><strong style="color: #00C853;">● CRITICAL:</strong> {{ critical_count }}</span>
           <span><strong style="color: #996600;">◆ SIGNIFICANT:</strong> {{ significant_count }}</span>
           <span><strong style="color: #1A6B00;">▸ MINOR:</strong> {{ minor_count }}</span>
@@ -116,7 +116,7 @@
               </div>
 
               {% if item.pair_label or item.doc_i %}
-                <div style="font-family: 'Space Mono', monospace; font-size: 8px; color: #AAAAAA; letter-spacing: 2px; text-transform: uppercase; padding: 8px 16px 0 16px;">
+                <div style="font-family: 'Space Mono', monospace; font-size: 8.16px; color: #AAAAAA; letter-spacing: 2px; text-transform: uppercase; padding: 8px 16px 0 16px;">
                   {{ item.pair_label or (item.doc_i ~ ' VS ' ~ item.doc_j) }}
                 </div>
               {% endif %}
@@ -254,7 +254,7 @@
               </div>
 
               {% if item.pair_label or item.doc_i %}
-                <div style="font-family: 'Space Mono', monospace; font-size: 8px; color: #AAAAAA; letter-spacing: 2px; text-transform: uppercase; padding: 8px 16px 0 16px;">
+                <div style="font-family: 'Space Mono', monospace; font-size: 8.16px; color: #AAAAAA; letter-spacing: 2px; text-transform: uppercase; padding: 8px 16px 0 16px;">
                   {{ item.pair_label or (item.doc_i ~ ' VS ' ~ item.doc_j) }}
                 </div>
               {% endif %}
@@ -387,7 +387,7 @@
         <div class="meter-score-num" id="meter-score-text">0%</div>
         <span class="meter-score-lbl">SIMILARITY INDEX</span>
         {% if result and result.score_range %}
-          <div style="font-family: 'Space Mono', monospace; font-size: 9px; color: #6B6760; margin-top: 4px;">
+          <div style="font-family: 'Space Mono', monospace; font-size: 9.18px; color: #6B6760; margin-top: 4px;">
             MATCH RANGE: {{ result.score_range.min }}% — {{ result.score_range.max }}%
           </div>
         {% endif %}
