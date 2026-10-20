@@ -22,15 +22,21 @@ load_dotenv(dotenv_path=Path(__file__).parent / ".env")
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
-app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "uploads")
-app.config["HISTORY_FOLDER"] = os.path.join(app.root_path, "history")
+is_vercel = bool(os.environ.get("VERCEL"))
+if is_vercel:
+    app.config["UPLOAD_FOLDER"] = "/tmp/uploads"
+    app.config["HISTORY_FOLDER"] = "/tmp/history"
+else:
+    app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "uploads")
+    app.config["HISTORY_FOLDER"] = os.path.join(app.root_path, "history")
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 
 # Create directories at module level
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 os.makedirs(app.config["HISTORY_FOLDER"], exist_ok=True)
-os.makedirs("uploads", exist_ok=True)
-os.makedirs("history", exist_ok=True)
+if not is_vercel:
+    os.makedirs("uploads", exist_ok=True)
+    os.makedirs("history", exist_ok=True)
 
 ALLOWED_EXTENSIONS = {"pdf", "docx", "txt"}
 
