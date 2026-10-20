@@ -22,3 +22,6 @@ DAE/uploads/*
 DAE/history/*
 !DAE/uploads/.gitkeep
 !DAE/history/.gitkeep
+
+# Vercel
+.vercel/
